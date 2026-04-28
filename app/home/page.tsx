@@ -1,12 +1,85 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bookmark, User, Search, PlusCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
   const [search, setSearch] = useState("");
+  const [masterDoa, setMasterDoa] = useState<any[]>([]);
+  const [savedBookmarks, setSavedBookmarks] = useState<number[]>([]);
+  const [userId, setUserId] = useState<number>(0);
+  const [activeCategory, setActiveCategory] = useState("sehari-hari");
+  const [categoryLoading, setCategoryLoading] = useState(false);
+  const router = useRouter();
 
-  // Gunakan objek transisi yang sederhana tanpa variabel terpisah jika masih error
+  const fetchMasterDoa = async (category: string) => {
+    try {
+      setCategoryLoading(true);
+
+      const res = await fetch(`/api/master-prayer/${category}`);
+      const data = await res.json();
+      setMasterDoa(data);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setCategoryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const id = Number(localStorage.getItem("userId"));
+    setUserId(id);
+  }, []);
+
+  useEffect(() => {
+    fetchMasterDoa(activeCategory);
+  }, [activeCategory]);
+
+  useEffect(() => {
+    if (userId !== 0) {
+      fetchSavedBookmarks();
+    }
+  }, [userId]);
+  const fetchSavedBookmarks = async () => {
+    try {
+      const res = await fetch(`/api/bookmark/${userId}`);
+      const data = await res.json();
+
+      const ids = data
+        .filter((item: any) => item.masterPrayerId)
+        .map((item: any) => item.masterPrayerId);
+
+      setSavedBookmarks(ids);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const handleBookmark = async (doa: any) => {
+    try {
+      await fetch("/api/bookmark", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          masterPrayerId: doa.id,
+        }),
+      });
+
+      await fetchSavedBookmarks();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const filteredDoa = masterDoa.filter((item) =>
+    item.judul.toLowerCase().includes(search.toLowerCase()) ||
+    item.latin.toLowerCase().includes(search.toLowerCase()) ||
+    item.terjemahan.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-[#f3f4f6] font-sans">
       <div className="w-[375px] h-[812px] bg-white border-8 border-slate-800 rounded-[40px] overflow-y-auto shadow-xl relative">
@@ -19,23 +92,23 @@ export default function Dashboard() {
               <div className="w-5 h-4 bg-[#A6CE39] rounded-sm"></div>
             </div>
             <h1 className="text-xl font-bold tracking-tight">
-              <span className="text-[#51309E]">holy</span>
+              <span className="text-[#51309E]">Holy</span>
               <span className="text-[#A6CE39]">Go</span>
             </h1>
           </div>
 
           <div className="flex items-center gap-1">
-            <motion.button 
+            <motion.button
               whileTap={{ scale: 0.75 }}
-              // Penulisan inline seperti ini paling aman dari error tipe data
-              transition={{ type: "spring", stiffness: 400, damping: 15 }}
+              onClick={() => router.push("/bookmark")}
               className="p-2 hover:bg-gray-50 rounded-full transition-colors"
             >
               <Bookmark className="w-6 h-6 text-[#1A1A1A]" strokeWidth={2} />
             </motion.button>
-            <motion.button 
+
+            <motion.button
               whileTap={{ scale: 0.75 }}
-              transition={{ type: "spring", stiffness: 400, damping: 15 }}
+              onClick={() => router.push("/settings")}
               className="p-2 hover:bg-gray-50 rounded-full transition-colors"
             >
               <User className="w-6 h-6 text-[#1A1A1A]" strokeWidth={2} />
@@ -64,32 +137,46 @@ export default function Dashboard() {
             </h2>
 
             <div className="grid grid-cols-3 gap-4">
-              {["Sehari-hari", "Haji", "Umroh"].map((item, i) => (
-                <motion.div
-                  key={i}
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                  className="flex flex-col items-center justify-center aspect-square bg-[#F8F9FB] rounded-[24px] border border-gray-50 cursor-pointer"
-                >
-                  <div className="text-2xl mb-2">
-                    {i === 0 ? "🌙" : i === 1 ? "🧭" : "🗺️"}
-                  </div>
-                  <span className="text-[11px] font-bold text-[#3D4759]">
-                    {item}
-                  </span>
-                </motion.div>
-              ))}
+              {[
+                { nama: "Sehari-hari", slug: "sehari-hari", icon: "🌙" },
+                { nama: "Haji", slug: "haji", icon: "🕋" },
+                { nama: "Umroh", slug: "umroh", icon: "🕌" },
+              ].map((item, i) => {
+                const isActive = activeCategory === item.slug;
+
+                return (
+                  <motion.div
+                    key={i}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                    onClick={() => setActiveCategory(item.slug)}
+                    className={`flex flex-col items-center justify-center aspect-square rounded-[24px] border cursor-pointer transition-all
+          ${isActive
+                        ? "bg-[#F3EEFF] border-[#51309E] shadow-sm"
+                        : "bg-[#F8F9FB] border-gray-50"
+                      }`}
+                  >
+                    <div className="text-2xl mb-2">{item.icon}</div>
+
+                    <span
+                      className={`text-[11px] font-bold ${isActive ? "text-[#51309E]" : "text-[#3D4759]"
+                        }`}
+                    >
+                      {item.nama}
+                    </span>
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
 
           {/* DOA */}
           <div>
             <div className="flex justify-between items-center mb-5 px-1">
-              <h2 className="text-[10px] font-black text-[#8E9AAF] uppercase tracking-[0.2em]">
-                DOA
-              </h2>
 
-              <motion.button 
+
+              <motion.button
+                onClick={() => router.push("/tambah-doa")}
                 whileTap={{ scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 400, damping: 15 }}
                 className="flex items-center gap-1.5 text-xs font-bold text-[#51309E]"
@@ -99,37 +186,51 @@ export default function Dashboard() {
               </motion.button>
             </div>
 
-            {/* CARD DOA */}
-            <div className="bg-white border border-gray-100 rounded-[32px] p-6 shadow-sm relative overflow-hidden">
-              <motion.button 
-                whileTap={{ scale: 0.8 }}
-                transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                className="absolute top-6 right-6 p-1"
-              >
-                <Bookmark className="w-5 h-5 text-[#1A1A1A]" strokeWidth={2} />
-              </motion.button>
-
-              <h3 className="text-lg font-bold text-[#1A1A1A] mb-6 pr-8">
-                Doa Sebelum makan
-              </h3>
-
-              <div className="text-right text-2xl leading-loose mb-6 font-serif text-[#1A1A1A]">
-                اَللّٰهُمَّ بَارِكْ لَنَا فِيْمَا رَزَقْتَنَا وَقِنَا عَذَابَ النَّارِ
-              </div>
-
-              <div className="space-y-3">
-                <p className="text-sm italic text-[#8E9AAF] leading-relaxed">
-                  Allahumma barik lana fima razaqtana wa qina 'adhaban-nar.
-                </p>
-
-                <p className="text-sm text-[#3D4759] leading-relaxed">
-                  <span className="font-bold text-[#1A1A1A]">Artinya:</span>{" "}
-                  Ya Allah, berkahilah kami dalam rezeki yang telah Engkau berikan
-                  dan lindungi kami dari api neraka.
+            {categoryLoading ? (
+              <p className="text-center text-gray-400 mt-10">Loading prayers...</p>
+            ) : filteredDoa.length === 0 ? (
+              <div className="bg-white border border-gray-100 rounded-[28px] p-8 shadow-sm text-center">
+                <p className="text-lg font-bold text-[#51309E] mb-2">Doa tidak ditemukan</p>
+                <p className="text-gray-400">
+                  Coba gunakan kata kunci lain...
                 </p>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-5">
+                {filteredDoa.map((item, index) => {
+                  const isSaved = savedBookmarks.includes(item.id);
+
+                  return (
+                    <div
+                      key={index}
+                      className="bg-white border border-gray-100 rounded-[28px] p-5 shadow-sm"
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <h2 className="font-bold text-lg">{item.judul}</h2>
+
+                        <button onClick={() => handleBookmark(item)}>
+                          <Bookmark
+                            className={`w-5 h-5 ${isSaved ? "text-[#51309E] fill-[#51309E]" : "text-black"
+                              }`}
+                          />
+                        </button>
+                      </div>
+
+                      <p className="text-right text-2xl leading-loose mb-5 font-serif">
+                        {item.doa}
+                      </p>
+
+                      <p className="italic text-gray-400 mb-4">{item.latin}</p>
+
+                      <p className="text-[#3D4759]">{item.terjemahan}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
           </div>
+
         </div>
       </div>
     </div>

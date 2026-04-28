@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int        @id @default(autoincrement())
+  username  String
+  email     String     @unique
+  password  String
+
+  prayers    Prayer[]
+  bookmarks  Bookmark[]
+}
+
+model Prayer {
+  id         Int      @id @default(autoincrement())
+  judul      String
+  doa        String
+  latin      String
+  terjemahan String
+  createdAt  DateTime @default(now())
+
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id])
+
+  bookmarks  Bookmark[]
+}
+
+model MasterPrayer {
+  id         Int      @id @default(autoincrement())
+  judul      String
+  doa        String
+  latin      String
+  terjemahan String
+  category   String
+
+  bookmarks  Bookmark[]
+}
+
+model Bookmark {
+  id             Int          @id @default(autoincrement())
+  userId         Int
+  masterPrayerId Int?
+  prayerId       Int?
+
+  user           User         @relation(fields: [userId], references: [id])
+  masterPrayer   MasterPrayer? @relation(fields: [masterPrayerId], references: [id])
+  prayer         Prayer?      @relation(fields: [prayerId], references: [id])
+}

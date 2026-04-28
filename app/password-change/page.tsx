@@ -10,21 +10,46 @@ export default function ChangePassword() {
   const [confirmPass, setConfirmPass] = useState("");
   const [error, setError] = useState("");
 
-  const handleUpdate = () => {
-    if (!oldPass || !newPass || !confirmPass) {
-      setError("Harap isi semua kolom!");
-      return;
-    }
+  const handleUpdate = async () => {
+  const userId = Number(localStorage.getItem("userId"));
 
-    if (newPass !== confirmPass) {
-      setError("Konfirmasi password tidak cocok!");
-      return;
-    }
+  if (!oldPass || !newPass || !confirmPass) {
+    setError("Harap isi semua kolom!");
+    return;
+  }
 
-    setError("");
-    alert("Password berhasil diperbarui!");
-    router.back();
-  };
+  if (newPass !== confirmPass) {
+    setError("Konfirmasi password tidak cocok!");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/change-password", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId,
+        oldPassword: oldPass,
+        newPassword: newPass,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      setError("");
+      alert("Password berhasil diperbarui!");
+      router.push("/settings");
+    } else {
+      setError(data.message);
+    }
+  } catch (error) {
+    console.log(error);
+    setError("Server error");
+  }
+};
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-[#f3f4f6] font-sans">

@@ -1,11 +1,69 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [mode, setMode] = useState("login");
   const [showPass, setShowPass] = useState(false);
 
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const router = useRouter();
+
   const isLogin = mode === "login";
+
+  const handleSubmit = async () => {
+    if (isLogin) {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email,
+          password
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem("holygo_user", JSON.stringify(data.user));
+        localStorage.setItem("userId", data.user.id.toString());
+
+        alert("Login Success");
+        router.push("/home");
+      } else {
+        alert(data.message);
+      }
+    } else {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          username,
+          email,
+          password
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("Register Success");
+        setMode("login");
+        setUsername("");
+        setEmail("");
+        setPassword("");
+      } else {
+        alert(data.message);
+      }
+    }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-[#f0f2f5] font-sans">
@@ -33,8 +91,8 @@ export default function Home() {
           <button
             onClick={() => setMode("login")}
             className={`flex-1 py-3 font-bold rounded-xl transition-all duration-200
-              ${isLogin 
-                ? "bg-white text-[#51309E] shadow active:scale-95" 
+              ${isLogin
+                ? "bg-white text-[#51309E] shadow active:scale-95"
                 : "text-gray-400 hover:bg-white/50"
               }`}
           >
@@ -44,8 +102,8 @@ export default function Home() {
           <button
             onClick={() => setMode("register")}
             className={`flex-1 py-3 font-bold rounded-xl transition-all duration-200
-              ${!isLogin 
-                ? "bg-white text-[#51309E] shadow active:scale-95" 
+              ${!isLogin
+                ? "bg-white text-[#51309E] shadow active:scale-95"
                 : "text-gray-400 hover:bg-white/50"
               }`}
           >
@@ -58,12 +116,16 @@ export default function Home() {
 
           {!isLogin && (
             <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               placeholder="Username"
               className="w-full h-14 bg-white border-2 border-gray-300 rounded-2xl px-5 text-gray-800 placeholder-gray-500 font-medium focus:outline-none focus:border-[#51309E] focus:scale-[1.02] transition-all"
             />
           )}
 
           <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             type="email"
             placeholder="Email"
             className="w-full h-14 bg-white border-2 border-gray-300 rounded-2xl px-5 text-gray-800 placeholder-gray-500 font-medium focus:outline-none focus:border-[#51309E] focus:scale-[1.02] transition-all"
@@ -71,6 +133,8 @@ export default function Home() {
 
           <div className="relative">
             <input
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               type={showPass ? "text" : "password"}
               placeholder="Password"
               className="w-full h-14 bg-white border-2 border-gray-300 rounded-2xl px-5 pr-12 text-gray-800 placeholder-gray-500 font-medium focus:outline-none focus:border-[#51309E] focus:scale-[1.02] transition-all"
@@ -85,12 +149,17 @@ export default function Home() {
 
           {isLogin && (
             <div className="text-right text-sm text-green-500 hover:underline cursor-pointer transition-all">
-              Forgot password?
+              <p
+                onClick={() => router.push("/forgot-password")}
+                className="text-green-500 text-sm cursor-pointer"
+              >
+                Forgot password?
+              </p>
             </div>
           )}
 
-          {/* BUTTON */}
           <button
+            onClick={handleSubmit}
             className="w-full h-14 bg-[#51309E] text-white rounded-2xl font-bold 
                        hover:brightness-110 
                        active:scale-95 active:shadow-inner 
