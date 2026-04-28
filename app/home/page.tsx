@@ -136,11 +136,13 @@ export default function Dashboard() {
               KATEGORI
             </h2>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
               {[
                 { nama: "Sehari-hari", slug: "sehari-hari", icon: "🌙" },
                 { nama: "Haji", slug: "haji", icon: "🕋" },
                 { nama: "Umroh", slug: "umroh", icon: "🕌" },
+                { nama: "Dzikir", slug: "dzikir", icon: "📿" },
+                { nama: "Sholat", slug: "sholat", icon: "🤲" },
               ].map((item, i) => {
                 const isActive = activeCategory === item.slug;
 
@@ -150,8 +152,7 @@ export default function Dashboard() {
                     whileTap={{ scale: 0.95 }}
                     transition={{ type: "spring", stiffness: 400, damping: 15 }}
                     onClick={() => setActiveCategory(item.slug)}
-                    className={`flex flex-col items-center justify-center aspect-square rounded-[24px] border cursor-pointer transition-all
-          ${isActive
+                    className={`w-[100px] h-[100px] flex-shrink-0 flex flex-col items-center justify-center rounded-[24px] border cursor-pointer transition-all ${isActive
                         ? "bg-[#F3EEFF] border-[#51309E] shadow-sm"
                         : "bg-[#F8F9FB] border-gray-50"
                       }`}
@@ -203,7 +204,8 @@ export default function Dashboard() {
                   return (
                     <div
                       key={index}
-                      className="bg-white border border-gray-100 rounded-[28px] p-5 shadow-sm"
+                      onClick={() => router.push(`/prayer/${item.id}?source=master`)}
+                      className="bg-white border border-gray-100 rounded-[28px] p-5 shadow-sm cursor-pointer active:scale-[0.98] transition"
                     >
                       <div className="flex justify-between items-start mb-4">
                         <h2 className="font-bold text-lg">{item.judul}</h2>

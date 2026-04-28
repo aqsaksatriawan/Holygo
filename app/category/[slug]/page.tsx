@@ -77,11 +77,17 @@ export default function CategoryPage() {
                         prayers.map((item) => (
                             <div
                                 key={item.id}
-                                className="bg-white border border-gray-200 rounded-[28px] p-5 shadow-sm"
+                                onClick={() => router.push(`/prayer/${item.id}?source=master`)}
+                                className="bg-white border border-gray-200 rounded-[28px] p-5 shadow-sm cursor-pointer active:scale-[0.98] transition"
                             >
                                 <div className="flex justify-between items-start mb-4">
                                     <h2 className="font-bold text-lg">{item.judul}</h2>
-                                    <button onClick={() => handleBookmark(item.id)}>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleBookmark(item.id);
+                                        }}
+                                    >
                                         {item.bookmarked ? (
                                             <BookmarkCheck className="w-5 h-5 text-[#51309E]" />
                                         ) : (

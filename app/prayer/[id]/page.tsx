@@ -1,117 +1,195 @@
 "use client";
 
-import React, { useState } from 'react';
-import { ChevronLeft, Bookmark } from 'lucide-react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useState } from "react";
+import { ChevronLeft, Bookmark, BookmarkCheck } from "lucide-react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
-const PrayerDetail: React.FC = () => {
-  const [fontSize, setFontSize] = useState<number>(24);
-  const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
+const PrayerDetailPage = () => {
+  const router = useRouter();
+  const params = useParams();
+  const searchParams = useSearchParams();
 
-  const prayerData = {
-    title: "Doa pagi",
-    arabic: "اَللَّهُمَّ إِنِّي أَسْأَلُكَ خَيْرَ هَذَا الْيَوْمِ وَخَيْرَ مَا فِيْهِ، وَأَعُوْذُ بِكَ مِنْ شَرِّ هَذَا الْيَوْمِ وَشَرِّ مَا فِيْهِ",
-    latin: "Allahumma innī asaluka khaira hāzal yaumi wa khaira mā fīhi, wa a'ūzu bika min syarri hāzal yaumi wa syarri mā fīhi.",
-    translation: "Ya Allah, sesungguhnya aku memohon kepada-Mu kebaikan hari ini dan kebaikan yang ada di dalamnya, dan aku berlindung kepada-Mu dari keburukan hari ini dan keburukan yang ada di dalamnya."
+  const id = Number(params.id);
+  const source = searchParams.get("source");
+
+  const [doaData, setDoaData] = useState<any>(null);
+  const [fontSize, setFontSize] = useState(20);
+  const [loading, setLoading] = useState(true);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [showFontControl, setShowFontControl] = useState(false);
+
+  useEffect(() => {
+    fetchPrayerDetail();
+  }, []);
+
+  const fetchPrayerDetail = async () => {
+    try {
+      const savedFont = localStorage.getItem("holygo_font_size");
+      if (savedFont) {
+        setFontSize(Number(savedFont));
+      }
+
+      const res = await fetch(`/api/prayer-detail/${id}?source=${source}`);
+      const data = await res.json();
+      setDoaData(data);
+
+      const userId = Number(localStorage.getItem("userId"));
+      const bookmarkRes = await fetch(`/api/bookmark/${userId}`);
+      const bookmarkData = await bookmarkRes.json();
+
+      const found = bookmarkData.find((item: any) => {
+        if (source === "master") {
+          return item.masterPrayerId === id;
+        } else {
+          return item.prayerId === id;
+        }
+      });
+
+      setIsBookmarked(!!found);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const handleFontChange = (value: number) => {
+    setFontSize(value);
+    localStorage.setItem("holygo_font_size", value.toString());
+  };
+
+  const handleToggleBookmark = async () => {
+    try {
+      const userId = Number(localStorage.getItem("userId"));
+
+      await fetch("/api/bookmark", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId,
+          masterPrayerId: source === "master" ? id : null,
+          prayerId: source !== "master" ? id : null,
+        }),
+      });
+
+      setIsBookmarked(!isBookmarked);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!doaData) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Doa tidak ditemukan
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-md mx-auto bg-white min-h-screen flex flex-col font-sans text-[#3D4759] shadow-2xl">
-      {/* Navbar - Judul Doa Pindah ke Sini */}
-      <header className="flex items-center justify-between p-4 border-b border-gray-50">
-        {/* Tombol Back */}
-        <motion.button 
-          whileTap={{ scale: 0.8 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          onClick={() => console.log('Back clicked')}
-        >
-          <ChevronLeft className="w-6 h-6 text-gray-600" />
-        </motion.button>
+    <div className="flex items-center justify-center min-h-screen bg-[#f3f4f6] font-sans">
+      <div className="w-[375px] h-[812px] bg-white border-8 border-slate-800 rounded-[40px] shadow-xl relative overflow-hidden">
 
-        {/* Judul Doa (Menggantikan Prayer Detail) */}
-        <motion.div 
-          initial={{ y: -10, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="bg-[#F0F7FF] text-[#3D4759] px-5 py-1.5 rounded-full font-bold text-base shadow-sm border border-blue-50"
-        >
-          {prayerData.title}
-        </motion.div>
+        <header className="p-5 flex items-center justify-between border-b sticky top-0 bg-white z-50">
+          <button onClick={() => router.back()}>
+            <ChevronLeft className="w-6 h-6 text-black" />
+          </button>
 
-        {/* Tombol Bookmark */}
-        <motion.button 
-          whileTap={{ scale: 0.8 }}
-          whileHover={{ scale: 1.1 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-          onClick={() => setIsBookmarked(!isBookmarked)}
-        >
-          <Bookmark 
-            className={`w-6 h-6 transition-colors ${isBookmarked ? 'fill-black text-black' : 'text-gray-800'}`} 
-          />
-        </motion.button>
-      </header>
+          <h1 className="font-bold text-lg">Prayer Detail</h1>
 
-      {/* Content Area */}
-      <main className="flex-1 p-6 overflow-y-auto">
-        {/* Spasi atas sedikit lebih lega karena judul sudah pindah ke header */}
-        <div 
-          className="text-right leading-[2.8] mb-8 mt-2 font-serif transition-all duration-300 ease-out"
-          style={{ fontSize: `${fontSize}px` }}
-          dir="rtl"
-        >
-          {prayerData.arabic}
+          <button
+            onClick={handleToggleBookmark}
+            className="relative z-50 active:scale-90 transition"
+          >
+            {isBookmarked ? (
+              <BookmarkCheck className="w-5 h-5 text-[#51309E] fill-[#51309E]" />
+            ) : (
+              <Bookmark className="w-5 h-5 text-[#51309E]" />
+            )}
+          </button>
+        </header>
+
+        <div className="h-[calc(812px-76px)] overflow-y-auto no-scrollbar">
+          <div className="p-6 space-y-8 pb-28">
+
+            <h2 className="text-center text-2xl font-bold bg-gray-100 inline-block px-4 py-1 rounded-xl mx-auto w-fit">
+              {doaData.judul}
+            </h2>
+
+            <p
+              style={{ fontSize: `${fontSize + 10}px` }}
+              className="text-right leading-loose font-serif break-words"
+            >
+              {doaData.doa}
+            </p>
+
+            <div className="bg-gray-50 rounded-3xl p-5">
+              <p
+                style={{ fontSize: `${fontSize}px` }}
+                className="italic text-gray-500 leading-relaxed break-words"
+              >
+                {doaData.latin}
+              </p>
+            </div>
+
+            <div>
+              <p className="font-bold mb-3 text-gray-500">Artinya:</p>
+              <p
+                style={{ fontSize: `${fontSize}px` }}
+                className="text-[#3D4759] leading-relaxed break-words"
+              >
+                {doaData.terjemahan}
+              </p>
+            </div>
+          </div>
+          {/* FLOATING FONT BUTTON */}
+          <div className="absolute bottom-8 right-6 z-50">
+
+            {showFontControl && (
+              <div className="absolute bottom-16 right-0 bg-white border shadow-xl rounded-2xl px-4 py-3 flex items-center gap-4 animate-fadeIn">
+                <button
+                  onClick={() => handleFontChange(Math.max(fontSize - 1, 16))}
+                  className="text-lg font-bold text-[#51309E] active:scale-90"
+                >
+                  A-
+                </button>
+
+                <span className="text-sm font-bold w-[42px] text-center">
+                  {fontSize}px
+                </span>
+
+                <button
+                  onClick={() => handleFontChange(Math.min(fontSize + 1, 32))}
+                  className="text-lg font-bold text-[#51309E] active:scale-90"
+                >
+                  A+
+                </button>
+              </div>
+            )}
+
+            <button
+              onClick={() => setShowFontControl(!showFontControl)}
+              className="w-14 h-14 rounded-full bg-[#51309E] text-white shadow-2xl flex items-center justify-center text-lg font-bold active:scale-95 transition"
+            >
+              Aa
+            </button>
+          </div>
         </div>
 
-        <div className="bg-[#F8F9FB] p-5 rounded-2xl border-l-4 border-indigo-200 mb-6 italic text-[#5E6778] leading-relaxed shadow-sm">
-          {prayerData.latin}
-        </div>
-
-        <div className="space-y-2">
-          <p className="text-xs font-black uppercase tracking-wider text-[#A0AABF]">Artinya:</p>
-          <p className="text-[#4A5468] leading-relaxed text-lg">
-            "{prayerData.translation}"
-          </p>
-        </div>
-      </main>
-
-      {/* Footer / Font Size Slider */}
-      <footer className="p-8 bg-[#F8F9FB] rounded-t-[40px] shadow-[0_-10px_30px_rgba(0,0,0,0.04)] border-t border-gray-100">
-        <div className="flex justify-between items-center mb-6">
-          <span className="text-sm font-bold text-[#3D4759] tracking-tight">Font size</span>
-          <span className="bg-white px-3 py-1 rounded-lg shadow-sm text-xs font-bold text-[#5236A0]">
-            {fontSize} px
-          </span>
-        </div>
-        
-        <input
-          type="range"
-          min="20"
-          max="32"
-          value={fontSize}
-          onChange={(e) => setFontSize(parseInt(e.target.value))}
-          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#5236A0]"
-        />
-      </footer>
-
-      <style jsx>{`
-        input[type='range']::-webkit-slider-thumb {
-          appearance: none;
-          height: 24px;
-          width: 24px;
-          border-radius: 50%;
-          background: #5236A0;
-          cursor: pointer;
-          border: 4px solid white;
-          box-shadow: 0 4px 10px rgba(82, 54, 160, 0.3);
-          transition: all 0.2s ease;
-        }
-        input[type='range']::-webkit-slider-thumb:active {
-          transform: scale(1.2);
-        }
-      `}</style>
+      </div>
     </div>
+
   );
 };
 
-export default PrayerDetail;
+export default PrayerDetailPage;

@@ -81,24 +81,33 @@ const BookmarkPage = () => {
                         <div className="space-y-5">
                             {bookmarks.map((item, index) => {
                                 const doaData = item.masterPrayer || item.prayer;
+                                const source = item.masterPrayer ? "master" : "user";
 
                                 return (
                                     <div
                                         key={index}
-                                        className="bg-white border border-gray-100 rounded-[28px] p-5 shadow-sm"
+                                        onClick={() => router.push(`/prayer/${doaData.id}?source=${source}`)}
+                                        className="bg-white border border-gray-100 rounded-[28px] p-5 shadow-sm cursor-pointer active:scale-[0.98] transition"
                                     >
                                         <div className="flex justify-between items-start mb-4">
-                                            <h2 className="font-bold text-lg">{doaData?.judul}</h2>
-                                            <Bookmark className="w-5 h-5 text-[#51309E] fill-[#51309E]" />
+                                            <h2 className="font-bold text-lg leading-snug pr-3">
+                                                {doaData?.judul}
+                                            </h2>
+
+                                            <Bookmark className="w-5 h-5 text-[#51309E] fill-[#51309E] flex-shrink-0" />
                                         </div>
 
-                                        <p className="text-right text-2xl leading-loose mb-5 font-serif">
+                                        <p className="text-right text-2xl leading-loose mb-5 font-serif break-words">
                                             {doaData?.doa}
                                         </p>
 
-                                        <p className="italic text-gray-400 mb-4">{doaData?.latin}</p>
+                                        <p className="italic text-gray-400 mb-4 leading-relaxed break-words">
+                                            {doaData?.latin}
+                                        </p>
 
-                                        <p className="text-[#3D4759]">{doaData?.terjemahan}</p>
+                                        <p className="text-[#3D4759] leading-relaxed break-words">
+                                            {doaData?.terjemahan}
+                                        </p>
                                     </div>
                                 );
                             })}
