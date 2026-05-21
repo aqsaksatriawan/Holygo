@@ -13,7 +13,7 @@ export async function POST(req: Request) {
       },
     });
 
-    // toggle hapus bookmark
+    // hapus bookmark
     if (existing) {
       await prisma.bookmark.delete({
         where: {
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Bookmark removed" });
     }
 
-    // toggle simpan bookmark
+    // simpan bookmark
     const bookmark = await prisma.bookmark.create({
       data: {
         userId,
