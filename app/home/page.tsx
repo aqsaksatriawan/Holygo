@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Bookmark, User, Search, PlusCircle } from "lucide-react";
+import { Bookmark, User, Search, PlusCircle, Clock, ArrowRight, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 
@@ -12,6 +12,76 @@ export default function Dashboard() {
   const [activeCategory, setActiveCategory] = useState("sehari-hari");
   const [categoryLoading, setCategoryLoading] = useState(false);
   const router = useRouter();
+
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchHistory, setSearchHistory] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  useEffect(() => {
+    const history = localStorage.getItem("holygo_search_history");
+    if (history) {
+      try {
+        setSearchHistory(JSON.parse(history));
+      } catch (e) {
+        console.error("Failed to parse search history", e);
+      }
+    }
+  }, [isSearching]);
+
+  useEffect(() => {
+    if (isSearching) {
+      const fetchSearchResults = async () => {
+        try {
+          setSearchLoading(true);
+          const res = await fetch(`/api/master-prayer?q=${encodeURIComponent(search)}`);
+          const data = await res.json();
+          setSearchResults(data);
+        } catch (error) {
+          console.log(error);
+        } finally {
+          setSearchLoading(false);
+        }
+      };
+
+      const delayDebounceFn = setTimeout(() => {
+        fetchSearchResults();
+      }, 200);
+
+      return () => clearTimeout(delayDebounceFn);
+    }
+  }, [search, isSearching]);
+
+  const addToHistory = (prayer: any) => {
+    const history = localStorage.getItem("holygo_search_history");
+    let currentHistory: any[] = [];
+    if (history) {
+      try {
+        currentHistory = JSON.parse(history);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    currentHistory = currentHistory.filter((item: any) => item.id !== prayer.id);
+    currentHistory.unshift({
+      id: prayer.id,
+      judul: prayer.judul,
+      category: prayer.category
+    });
+    currentHistory = currentHistory.slice(0, 5);
+    localStorage.setItem("holygo_search_history", JSON.stringify(currentHistory));
+    setSearchHistory(currentHistory);
+  };
+
+  const clearHistory = () => {
+    localStorage.removeItem("holygo_search_history");
+    setSearchHistory([]);
+  };
+
+  const handleSelectPrayer = (prayer: any) => {
+    addToHistory(prayer);
+    router.push(`/prayer/${prayer.id}?source=master`);
+  };
 
   const fetchMasterDoa = async (category: string) => {
     try {
@@ -120,119 +190,201 @@ export default function Dashboard() {
         <div className="px-5 pt-6 pb-24">
 
           {/* SEARCH */}
-          <div className="relative mb-8">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search for prayers..."
-              className="w-full h-14 bg-[#F3F4F6] rounded-2xl pl-12 pr-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#51309E]/10 transition-all"
-            />
+          <div className="flex items-center gap-3 mb-8">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onFocus={() => setIsSearching(true)}
+                placeholder="Cari doa..."
+                className="w-full h-14 bg-[#F3F4F6] rounded-2xl pl-12 pr-10 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#51309E]/10 transition-all"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-200/50 transition-all"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            {isSearching && (
+              <button
+                onClick={() => {
+                  setIsSearching(false);
+                  setSearch("");
+                }}
+                className="text-sm font-bold text-[#51309E] hover:text-purple-700 active:scale-95 transition-all shrink-0 pr-1"
+              >
+                Batal
+              </button>
+            )}
           </div>
 
-          {/* KATEGORI */}
-          <div className="mb-10">
-            <h2 className="text-[10px] font-black text-[#8E9AAF] uppercase tracking-[0.2em] mb-4 ml-1">
-              KATEGORI
-            </h2>
+          {isSearching ? (
+            <div className="animate-fadeIn">
+              {/* HEADER PENCARIAN & HAPUS */}
+              <div className="flex justify-between items-center mb-5">
+                <span className="text-[11px] font-bold text-gray-400 tracking-wider">PENCARIAN</span>
+                {searchHistory.length > 0 && (
+                  <button
+                    onClick={clearHistory}
+                    className="text-xs font-semibold text-blue-500 hover:text-blue-600 active:scale-95 transition"
+                  >
+                    Hapus
+                  </button>
+                )}
+              </div>
 
-            <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
-              {[
-                { nama: "Sehari-hari", slug: "sehari-hari", icon: "🌙" },
-                { nama: "Haji", slug: "haji", icon: "🕋" },
-                { nama: "Umroh", slug: "umroh", icon: "🕌" },
-                { nama: "Dzikir", slug: "dzikir", icon: "📿" },
-                { nama: "Sholat", slug: "sholat", icon: "🤲" },
-              ].map((item, i) => {
-                const isActive = activeCategory === item.slug;
+              {/* TERAKHIR DICARI */}
+              {searchHistory.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-xs text-gray-400 font-medium mb-3">Terakhir dicari</h3>
+                  <div className="space-y-2.5">
+                    {searchHistory.map((item) => (
+                      <div
+                        key={item.id}
+                        onClick={() => handleSelectPrayer(item)}
+                        className="bg-white border border-gray-100 rounded-2xl px-5 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 active:scale-[0.98] transition shadow-[0_1px_2px_rgba(0,0,0,0.01)]"
+                      >
+                        <span className="font-medium italic text-gray-600 text-[14px]">
+                          {item.judul}
+                        </span>
+                        <Clock className="w-4.5 h-4.5 text-gray-400" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-                return (
-                  <motion.div
-                    key={i}
+              {/* HASIL */}
+              <div>
+                <h3 className="text-xs text-gray-400 font-medium mb-3">Hasil</h3>
+                {searchLoading ? (
+                  <p className="text-center text-gray-400 py-6 text-sm">Mencari doa...</p>
+                ) : searchResults.length === 0 ? (
+                  <div className="bg-white border border-gray-100 rounded-[28px] p-8 text-center shadow-sm">
+                    <p className="text-lg font-bold text-[#51309E] mb-2">Doa tidak ditemukan</p>
+                    <p className="text-gray-400">Coba gunakan kata kunci lain...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    {searchResults.map((item) => (
+                      <div
+                        key={item.id}
+                        onClick={() => handleSelectPrayer(item)}
+                        className="bg-white border border-gray-100 rounded-2xl px-5 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 active:scale-[0.98] transition shadow-[0_1px_2px_rgba(0,0,0,0.01)]"
+                      >
+                        <span className="font-semibold text-gray-800 text-[14px]">
+                          {item.judul}
+                        </span>
+                        <ArrowRight className="w-4.5 h-4.5 text-gray-400" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* KATEGORI */}
+              <div className="mb-10">
+                <h2 className="text-sm font-semibold text-[#6B7280] mb-4 ml-1">Kategori</h2>
+
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    { nama: "Sehari-hari", slug: "sehari-hari", icon: "🌙" },
+                    { nama: "Haji", slug: "haji", icon: "🕋" },
+                    { nama: "Umroh", slug: "umroh", icon: "🕌" },
+                    { nama: "Travel", slug: "travel", icon: "✈️" },
+                    { nama: "Perlindungan", slug: "perlindungan", icon: "🛡️" },
+                    { nama: "Kesehatan", slug: "kesehatan", icon: "💖" },
+                    { nama: "Rezeki", slug: "rezeki", icon: "🙌" },
+                    { nama: "Keluarga", slug: "keluarga", icon: "👨‍👩‍👧" },
+                    { nama: "Penyejuk Hati", slug: "penyejuk-hati", icon: "😊" },
+                    { nama: "Syukur", slug: "syukur", icon: "🙏" },
+                    { nama: "Alam", slug: "alam", icon: "🌧️" },
+                    { nama: "Pendidikan", slug: "pendidikan", icon: "🎓" },
+                  ].map((item, i) => {
+                    const isActive = activeCategory === item.slug;
+
+                    return (
+                      <motion.div
+                        key={i}
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                        onClick={() => setActiveCategory(item.slug)}
+                        className={`flex flex-col items-center justify-center rounded-xl border p-4 cursor-pointer transition-all text-center ${isActive
+                          ? "bg-[#F3EEFF] border-[#51309E] shadow-sm"
+                          : "bg-[#FBFCFD] border-gray-50"
+                        }`}
+                      >
+                        <div className="text-2xl mb-3">{item.icon}</div>
+                        <span className={`text-[12px] font-semibold ${isActive ? "text-[#51309E]" : "text-[#3D4759]"}`}>
+                          {item.nama}
+                        </span>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* DOA */}
+              <div>
+                <div className="flex justify-between items-center mb-5 px-1">
+
+
+                  <motion.button
+                    onClick={() => router.push("/tambah-doa")}
                     whileTap={{ scale: 0.95 }}
                     transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                    onClick={() => setActiveCategory(item.slug)}
-                    className={`w-[100px] h-[100px] flex-shrink-0 flex flex-col items-center justify-center rounded-[24px] border cursor-pointer transition-all ${isActive
-                        ? "bg-[#F3EEFF] border-[#51309E] shadow-sm"
-                        : "bg-[#F8F9FB] border-gray-50"
-                      }`}
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#51309E]"
                   >
-                    <div className="text-2xl mb-2">{item.icon}</div>
+                    <PlusCircle className="w-4 h-4" />
+                    Tambah Doa
+                  </motion.button>
+                </div>
 
-                    <span
-                      className={`text-[11px] font-bold ${isActive ? "text-[#51309E]" : "text-[#3D4759]"
-                        }`}
-                    >
-                      {item.nama}
-                    </span>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
+                {categoryLoading ? (
+                  <p className="text-center text-gray-400 mt-10">Loading prayers...</p>
+                ) : filteredDoa.length === 0 ? (
+                  <div className="bg-white border border-gray-100 rounded-[28px] p-8 shadow-sm text-center">
+                    <p className="text-lg font-bold text-[#51309E] mb-2">Doa tidak ditemukan</p>
+                    <p className="text-gray-400">
+                      Coba gunakan kata kunci lain...
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-5">
+                    {filteredDoa.map((item, index) => {
+                      const isSaved = savedBookmarks.includes(item.id);
 
-          {/* DOA */}
-          <div>
-            <div className="flex justify-between items-center mb-5 px-1">
+                      return (
+                        <div
+                          key={index}
+                          onClick={() => router.push(`/prayer/${item.id}?source=master`)}
+                          className="bg-white border border-gray-100 rounded-[28px] p-5 shadow-sm cursor-pointer active:scale-[0.98] transition"
+                        >
+                          <div className="flex justify-between items-start mb-4">
+                            <h2 className="font-bold text-lg">{item.judul}</h2>
+                          </div>
 
+                          <p className="text-right text-2xl leading-loose mb-5 font-serif">
+                            {item.doa}
+                          </p>
 
-              <motion.button
-                onClick={() => router.push("/tambah-doa")}
-                whileTap={{ scale: 0.95 }}
-                transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                className="flex items-center gap-1.5 text-xs font-bold text-[#51309E]"
-              >
-                <PlusCircle className="w-4 h-4" />
-                Tambah Doa
-              </motion.button>
-            </div>
+                          <p className="italic text-gray-400 mb-4">{item.latin}</p>
 
-            {categoryLoading ? (
-              <p className="text-center text-gray-400 mt-10">Loading prayers...</p>
-            ) : filteredDoa.length === 0 ? (
-              <div className="bg-white border border-gray-100 rounded-[28px] p-8 shadow-sm text-center">
-                <p className="text-lg font-bold text-[#51309E] mb-2">Doa tidak ditemukan</p>
-                <p className="text-gray-400">
-                  Coba gunakan kata kunci lain...
-                </p>
+                          <p className="text-[#3D4759]">{item.terjemahan}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="space-y-5">
-                {filteredDoa.map((item, index) => {
-                  const isSaved = savedBookmarks.includes(item.id);
-
-                  return (
-                    <div
-                      key={index}
-                      onClick={() => router.push(`/prayer/${item.id}?source=master`)}
-                      className="bg-white border border-gray-100 rounded-[28px] p-5 shadow-sm cursor-pointer active:scale-[0.98] transition"
-                    >
-                      <div className="flex justify-between items-start mb-4">
-                        <h2 className="font-bold text-lg">{item.judul}</h2>
-
-                        <button onClick={() => handleBookmark(item)}>
-                          <Bookmark
-                            className={`w-5 h-5 ${isSaved ? "text-[#51309E] fill-[#51309E]" : "text-black"
-                              }`}
-                          />
-                        </button>
-                      </div>
-
-                      <p className="text-right text-2xl leading-loose mb-5 font-serif">
-                        {item.doa}
-                      </p>
-
-                      <p className="italic text-gray-400 mb-4">{item.latin}</p>
-
-                      <p className="text-[#3D4759]">{item.terjemahan}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-          </div>
-
+            </>
+          )}
         </div>
       </div>
     </div>

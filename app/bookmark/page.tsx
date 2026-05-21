@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ChevronLeft, Bookmark } from "lucide-react";
+import { ChevronLeft, Bookmark, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 const BookmarkPage = () => {
@@ -41,6 +41,27 @@ const BookmarkPage = () => {
             setBookmarks([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleUnbookmark = async (e: React.MouseEvent, item: any) => {
+        e.stopPropagation();
+        try {
+            await fetch("/api/bookmark", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    userId,
+                    masterPrayerId: item.masterPrayerId || null,
+                    prayerId: item.prayerId || null,
+                }),
+            });
+
+            await fetchBookmarks();
+        } catch (error) {
+            console.log(error);
         }
     };
 
@@ -94,7 +115,20 @@ const BookmarkPage = () => {
                                                 {doaData?.judul}
                                             </h2>
 
-                                            <Bookmark className="w-5 h-5 text-[#51309E] fill-[#51309E] flex-shrink-0" />
+                                            <button
+                                                onClick={(e) => handleUnbookmark(e, item)}
+                                                className={`p-1.5 rounded-full transition active:scale-90 flex-shrink-0 relative z-10 ${
+                                                    source === "user"
+                                                        ? "text-red-500 hover:bg-red-50"
+                                                        : "text-[#51309E] hover:bg-purple-50"
+                                                }`}
+                                            >
+                                                {source === "user" ? (
+                                                    <Trash2 className="w-5 h-5" />
+                                                ) : (
+                                                    <Bookmark className="w-5 h-5 fill-[#51309E]" />
+                                                )}
+                                            </button>
                                         </div>
 
                                         <p className="text-right text-2xl leading-loose mb-5 font-serif break-words">
