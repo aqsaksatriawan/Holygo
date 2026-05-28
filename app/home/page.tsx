@@ -78,6 +78,23 @@ export default function Dashboard() {
     setSearchHistory([]);
   };
 
+  const removeHistoryItem = (id: number) => {
+    const history = localStorage.getItem("holygo_search_history");
+    if (!history) return;
+
+    let currentHistory: any[] = [];
+    try {
+      currentHistory = JSON.parse(history);
+    } catch (e) {
+      console.error(e);
+      return;
+    }
+
+    const updatedHistory = currentHistory.filter((item: any) => item.id !== id);
+    localStorage.setItem("holygo_search_history", JSON.stringify(updatedHistory));
+    setSearchHistory(updatedHistory);
+  };
+
   const handleSelectPrayer = (prayer: any) => {
     addToHistory(prayer);
     router.push(`/prayer/${prayer.id}?source=master`);
@@ -228,7 +245,7 @@ export default function Dashboard() {
                     onClick={clearHistory}
                     className="text-xs font-semibold text-blue-500 hover:text-blue-600 active:scale-95 transition"
                   >
-                    Hapus
+                    Hapus Semua
                   </button>
                 )}
               </div>
@@ -241,12 +258,28 @@ export default function Dashboard() {
                     {searchHistory.map((item) => (
                       <div
                         key={item.id}
-                        onClick={() => handleSelectPrayer(item)}
-                        className="bg-white border border-gray-100 rounded-2xl px-5 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 active:scale-[0.98] transition shadow-[0_1px_2px_rgba(0,0,0,0.01)]"
+                        className="bg-white border border-gray-100 rounded-2xl px-4 py-3 flex items-center justify-between hover:bg-gray-50 active:scale-[0.98] transition shadow-[0_1px_2px_rgba(0,0,0,0.01)]"
                       >
-                        <span className="font-medium italic text-gray-600 text-[14px]">
-                          {item.judul}
-                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeHistoryItem(item.id);
+                          }}
+                          className="p-2 rounded-full text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
+                          aria-label={`Hapus histori ${item.judul}`}
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+
+                        <div
+                          onClick={() => handleSelectPrayer(item)}
+                          className="flex-1 pl-3 pr-2 cursor-pointer"
+                        >
+                          <span className="font-medium italic text-gray-600 text-[14px]">
+                            {item.judul}
+                          </span>
+                        </div>
+
                         <Clock className="w-4.5 h-4.5 text-gray-400" />
                       </div>
                     ))}
