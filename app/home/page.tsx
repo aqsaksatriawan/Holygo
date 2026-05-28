@@ -144,11 +144,7 @@ export default function Dashboard() {
     }
   };
 
-  const filteredDoa = masterDoa.filter((item) =>
-    item.judul.toLowerCase().includes(search.toLowerCase()) ||
-    item.latin.toLowerCase().includes(search.toLowerCase()) ||
-    item.terjemahan.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredDoa = masterDoa;
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-[#f3f4f6] font-sans">
@@ -259,32 +255,34 @@ export default function Dashboard() {
               )}
 
               {/* HASIL */}
-              <div>
-                <h3 className="text-xs text-gray-400 font-medium mb-3">Hasil</h3>
-                {searchLoading ? (
-                  <p className="text-center text-gray-400 py-6 text-sm">Mencari doa...</p>
-                ) : searchResults.length === 0 ? (
-                  <div className="bg-white border border-gray-100 rounded-[28px] p-8 text-center shadow-sm">
-                    <p className="text-lg font-bold text-[#51309E] mb-2">Doa tidak ditemukan</p>
-                    <p className="text-gray-400">Coba gunakan kata kunci lain...</p>
-                  </div>
-                ) : (
-                  <div className="space-y-2.5">
-                    {searchResults.map((item) => (
-                      <div
-                        key={item.id}
-                        onClick={() => handleSelectPrayer(item)}
-                        className="bg-white border border-gray-100 rounded-2xl px-5 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 active:scale-[0.98] transition shadow-[0_1px_2px_rgba(0,0,0,0.01)]"
-                      >
-                        <span className="font-semibold text-gray-800 text-[14px]">
-                          {item.judul}
-                        </span>
-                        <ArrowRight className="w-4.5 h-4.5 text-gray-400" />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              {search.length > 0 && (
+                <div>
+                  <h3 className="text-xs text-gray-400 font-medium mb-3">Hasil</h3>
+                  {searchLoading ? (
+                    <p className="text-center text-gray-400 py-6 text-sm">Mencari doa...</p>
+                  ) : searchResults.length === 0 ? (
+                    <div className="bg-white border border-gray-100 rounded-[28px] p-8 text-center shadow-sm">
+                      <p className="text-lg font-bold text-[#51309E] mb-2">Doa tidak ditemukan</p>
+                      <p className="text-gray-400">Coba gunakan kata kunci lain...</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {searchResults.map((item) => (
+                        <div
+                          key={item.id}
+                          onClick={() => handleSelectPrayer(item)}
+                          className="bg-white border border-gray-100 rounded-2xl px-5 py-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 active:scale-[0.98] transition shadow-[0_1px_2px_rgba(0,0,0,0.01)]"
+                        >
+                          <span className="font-semibold text-gray-800 text-[14px]">
+                            {item.judul}
+                          </span>
+                          <ArrowRight className="w-4.5 h-4.5 text-gray-400" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <>
@@ -296,16 +294,7 @@ export default function Dashboard() {
                   {[
                     { nama: "Sehari-hari", slug: "sehari-hari", icon: "🌙" },
                     { nama: "Haji", slug: "haji", icon: "🕋" },
-                    { nama: "Umroh", slug: "umroh", icon: "🕌" },
-                    { nama: "Travel", slug: "travel", icon: "✈️" },
-                    { nama: "Perlindungan", slug: "perlindungan", icon: "🛡️" },
-                    { nama: "Kesehatan", slug: "kesehatan", icon: "💖" },
-                    { nama: "Rezeki", slug: "rezeki", icon: "🙌" },
-                    { nama: "Keluarga", slug: "keluarga", icon: "👨‍👩‍👧" },
-                    { nama: "Penyejuk Hati", slug: "penyejuk-hati", icon: "😊" },
-                    { nama: "Syukur", slug: "syukur", icon: "🙏" },
-                    { nama: "Alam", slug: "alam", icon: "🌧️" },
-                    { nama: "Pendidikan", slug: "pendidikan", icon: "🎓" },
+                    { nama: "Umrah", slug: "umrah", icon: "🕌" },
                   ].map((item, i) => {
                     const isActive = activeCategory === item.slug;
 

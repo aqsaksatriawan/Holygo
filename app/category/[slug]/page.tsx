@@ -55,7 +55,7 @@ export default function CategoryPage() {
     const getTitle = () => {
         if (slug === "sehari-hari") return "Doa Sehari-hari";
         if (slug === "haji") return "Doa Haji";
-        if (slug === "umroh") return "Doa Umroh";
+        if (slug === "umrah") return "Doa Umrah";
         return "Daftar Doa";
     };
 
