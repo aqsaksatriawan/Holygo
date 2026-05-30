@@ -66,6 +66,8 @@ const SettingsPage: React.FC = () => {
           </div>
         </div>
 
+        {/* SECTION KATEGORI - moved to Home */}
+
         {/* SECTION AKUN */}
         <div className="space-y-4">
           <h2 className="text-[11px] font-black text-[#8E9AAF] uppercase tracking-[0.2em] ml-1">

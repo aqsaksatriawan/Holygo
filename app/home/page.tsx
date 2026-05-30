@@ -10,6 +10,16 @@ export default function Dashboard() {
   const [savedBookmarks, setSavedBookmarks] = useState<number[]>([]);
   const [userId, setUserId] = useState<number>(0);
   const [activeCategory, setActiveCategory] = useState("sehari-hari");
+  const defaultCategories = [
+    { nama: "Sehari-hari", slug: "sehari-hari", icon: "🌙" },
+    { nama: "Haji", slug: "haji", icon: "🕋" },
+    { nama: "Umrah", slug: "umrah", icon: "🕌" },
+  ];
+  const [categories, setCategories] = useState<any[]>(defaultCategories);
+  const [customCategoriesLoaded, setCustomCategoriesLoaded] = useState(false);
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatIcon, setNewCatIcon] = useState("🏷️");
   const [categoryLoading, setCategoryLoading] = useState(false);
   const router = useRouter();
 
@@ -122,6 +132,71 @@ export default function Dashboard() {
   useEffect(() => {
     fetchMasterDoa(activeCategory);
   }, [activeCategory]);
+
+  // load custom categories from localStorage and merge with defaults
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("holygo_custom_categories");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setCategories([...defaultCategories, ...parsed]);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load custom categories", e);
+    } finally {
+      setCustomCategoriesLoaded(true);
+    }
+  }, []);
+
+  // ensure activeCategory exists in categories
+  useEffect(() => {
+    if (!customCategoriesLoaded) return;
+    if (!categories.find((c) => c.slug === activeCategory) && categories.length > 0) {
+      setActiveCategory(categories[0].slug);
+    }
+  }, [categories, customCategoriesLoaded]);
+
+  const slugify = (s: string) =>
+    s
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9\-]/g, "");
+
+  const addNewCategory = () => {
+    if (!newCatName.trim()) return alert("Masukkan nama kategori");
+
+    const newCat = { nama: newCatName.trim(), slug: slugify(newCatName), icon: newCatIcon || "🏷️" };
+    try {
+      const stored = localStorage.getItem("holygo_custom_categories");
+      const custom = stored ? JSON.parse(stored) : [];
+      const updatedCustom = [...custom, newCat];
+      localStorage.setItem("holygo_custom_categories", JSON.stringify(updatedCustom));
+      setCategories([...defaultCategories, ...updatedCustom]);
+      setNewCatName("");
+      setNewCatIcon("🏷️");
+      setShowAddCategory(false);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const deleteCategory = (slug: string) => {
+    try {
+      const stored = localStorage.getItem("holygo_custom_categories");
+      const custom = stored ? JSON.parse(stored) : [];
+      const updatedCustom = custom.filter((c: any) => c.slug !== slug);
+      localStorage.setItem("holygo_custom_categories", JSON.stringify(updatedCustom));
+      setCategories([...defaultCategories, ...updatedCustom]);
+      if (activeCategory === slug) {
+        setActiveCategory(defaultCategories[0].slug);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   useEffect(() => {
     if (userId !== 0) {
@@ -320,16 +395,32 @@ export default function Dashboard() {
           ) : (
             <>
               {/* KATEGORI */}
-              <div className="mb-10">
-                <h2 className="text-sm font-semibold text-[#6B7280] mb-4 ml-1">Kategori</h2>
+                <div className="mb-2">
+                <h2 className="text-sm font-semibold text-[#6B7280] mb-3 ml-1">Kategori</h2>
+
+                <div className="mb-4 ml-1">
+                  <button onClick={() => setShowAddCategory((s) => !s)} className="flex items-center gap-2 text-xs font-bold text-[#51309E]">
+                    <PlusCircle className="w-4 h-4" />
+                    {showAddCategory ? "Batal" : "Tambah Kategori"}
+                  </button>
+                </div>
+
+                {showAddCategory && (
+                  <div className="bg-white p-3 rounded-xl border border-gray-100 mb-4">
+                    <div className="mb-2">
+                      <input value={newCatName} onChange={(e) => setNewCatName(e.target.value)} placeholder="Nama kategori" className="w-full p-2 rounded-lg bg-gray-50 border border-gray-100" />
+                    </div>
+                    <div className="mb-2 flex items-center gap-2">
+                      <input value={newCatIcon} onChange={(e) => setNewCatIcon(e.target.value)} placeholder="Emoji" className="w-20 p-2 rounded-lg bg-gray-50 border border-gray-100" />
+                      <button onClick={addNewCategory} className="bg-[#51309E] text-white py-2 px-3 rounded-lg text-sm font-bold">Simpan</button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-3 gap-4">
-                  {[
-                    { nama: "Sehari-hari", slug: "sehari-hari", icon: "🌙" },
-                    { nama: "Haji", slug: "haji", icon: "🕋" },
-                    { nama: "Umrah", slug: "umrah", icon: "🕌" },
-                  ].map((item, i) => {
+                  {categories.map((item, i) => {
                     const isActive = activeCategory === item.slug;
+                    const isCustom = !defaultCategories.find((d) => d.slug === item.slug);
 
                     return (
                       <motion.div
@@ -337,11 +428,24 @@ export default function Dashboard() {
                         whileTap={{ scale: 0.95 }}
                         transition={{ type: "spring", stiffness: 400, damping: 15 }}
                         onClick={() => setActiveCategory(item.slug)}
-                        className={`flex flex-col items-center justify-center rounded-xl border p-4 cursor-pointer transition-all text-center ${isActive
+                        className={`relative flex flex-col items-center justify-center rounded-xl border p-4 cursor-pointer transition-all text-center ${isActive
                           ? "bg-[#F3EEFF] border-[#51309E] shadow-sm"
                           : "bg-[#FBFCFD] border-gray-50"
                         }`}
                       >
+                        {isCustom && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteCategory(item.slug);
+                            }}
+                            className="absolute -top-1 -right-1 text-gray-400 hover:text-red-600 bg-transparent p-0.5 rounded-full"
+                            aria-label={`Hapus kategori ${item.nama}`}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+
                         <div className="text-2xl mb-3">{item.icon}</div>
                         <span className={`text-[12px] font-semibold ${isActive ? "text-[#51309E]" : "text-[#3D4759]"}`}>
                           {item.nama}
@@ -353,8 +457,8 @@ export default function Dashboard() {
               </div>
 
               {/* DOA */}
-              <div>
-                <div className="flex justify-between items-center mb-5 px-1">
+                <div>
+                <div className="flex justify-between items-center mb-3 px-0 py-0">
 
 
                   <motion.button
@@ -378,7 +482,7 @@ export default function Dashboard() {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-5">
+                  <div className="space-y-6">
                     {filteredDoa.map((item, index) => {
                       const isSaved = savedBookmarks.includes(item.id);
 
