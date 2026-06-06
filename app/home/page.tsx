@@ -6,10 +6,9 @@ import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
   const [search, setSearch] = useState("");
-  const [masterDoa, setMasterDoa] = useState<any[]>([]);
   const [savedBookmarks, setSavedBookmarks] = useState<number[]>([]);
   const [userId, setUserId] = useState<number>(0);
-  const [activeCategory, setActiveCategory] = useState("sehari-hari");
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const defaultCategories = [
     { nama: "Sehari-hari", slug: "sehari-hari", icon: "🌙" },
     { nama: "Haji", slug: "haji", icon: "🕋" },
@@ -17,10 +16,6 @@ export default function Dashboard() {
   ];
   const [categories, setCategories] = useState<any[]>(defaultCategories);
   const [customCategoriesLoaded, setCustomCategoriesLoaded] = useState(false);
-  const [showAddCategory, setShowAddCategory] = useState(false);
-  const [newCatName, setNewCatName] = useState("");
-  const [newCatIcon, setNewCatIcon] = useState("🏷️");
-  const [categoryLoading, setCategoryLoading] = useState(false);
   const router = useRouter();
 
   const [isSearching, setIsSearching] = useState(false);
@@ -110,28 +105,10 @@ export default function Dashboard() {
     router.push(`/prayer/${prayer.id}?source=master`);
   };
 
-  const fetchMasterDoa = async (category: string) => {
-    try {
-      setCategoryLoading(true);
-
-      const res = await fetch(`/api/master-prayer/${category}`);
-      const data = await res.json();
-      setMasterDoa(data);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setCategoryLoading(false);
-    }
-  };
-
   useEffect(() => {
     const id = Number(localStorage.getItem("userId"));
     setUserId(id);
   }, []);
-
-  useEffect(() => {
-    fetchMasterDoa(activeCategory);
-  }, [activeCategory]);
 
   // load custom categories from localStorage and merge with defaults
   useEffect(() => {
@@ -153,35 +130,10 @@ export default function Dashboard() {
   // ensure activeCategory exists in categories
   useEffect(() => {
     if (!customCategoriesLoaded) return;
-    if (!categories.find((c) => c.slug === activeCategory) && categories.length > 0) {
-      setActiveCategory(categories[0].slug);
+    if (activeCategory && !categories.find((c) => c.slug === activeCategory) && categories.length > 0) {
+      setActiveCategory(null);
     }
-  }, [categories, customCategoriesLoaded]);
-
-  const slugify = (s: string) =>
-    s
-      .toLowerCase()
-      .trim()
-      .replace(/\s+/g, "-")
-      .replace(/[^a-z0-9\-]/g, "");
-
-  const addNewCategory = () => {
-    if (!newCatName.trim()) return alert("Masukkan nama kategori");
-
-    const newCat = { nama: newCatName.trim(), slug: slugify(newCatName), icon: newCatIcon || "🏷️" };
-    try {
-      const stored = localStorage.getItem("holygo_custom_categories");
-      const custom = stored ? JSON.parse(stored) : [];
-      const updatedCustom = [...custom, newCat];
-      localStorage.setItem("holygo_custom_categories", JSON.stringify(updatedCustom));
-      setCategories([...defaultCategories, ...updatedCustom]);
-      setNewCatName("");
-      setNewCatIcon("🏷️");
-      setShowAddCategory(false);
-    } catch (e) {
-      console.error(e);
-    }
-  };
+  }, [categories, customCategoriesLoaded, activeCategory]);
 
   const deleteCategory = (slug: string) => {
     try {
@@ -191,7 +143,7 @@ export default function Dashboard() {
       localStorage.setItem("holygo_custom_categories", JSON.stringify(updatedCustom));
       setCategories([...defaultCategories, ...updatedCustom]);
       if (activeCategory === slug) {
-        setActiveCategory(defaultCategories[0].slug);
+        setActiveCategory(null);
       }
     } catch (e) {
       console.error(e);
@@ -236,8 +188,6 @@ export default function Dashboard() {
     }
   };
 
-  const filteredDoa = masterDoa;
-
   return (
     <div className="flex items-center justify-center min-h-screen bg-[#f3f4f6] font-sans">
       <div className="w-[375px] h-[812px] bg-white border-8 border-slate-800 rounded-[40px] overflow-y-auto shadow-xl relative">
@@ -256,14 +206,6 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center gap-1">
-            <motion.button
-              whileTap={{ scale: 0.75 }}
-              onClick={() => router.push("/bookmark")}
-              className="p-2 hover:bg-gray-50 rounded-full transition-colors"
-            >
-              <Bookmark className="w-6 h-6 text-[#1A1A1A]" strokeWidth={2} />
-            </motion.button>
-
             <motion.button
               whileTap={{ scale: 0.75 }}
               onClick={() => router.push("/settings")}
@@ -396,26 +338,16 @@ export default function Dashboard() {
             <>
               {/* KATEGORI */}
                 <div className="mb-2">
-                <h2 className="text-sm font-semibold text-[#6B7280] mb-3 ml-1">Kategori</h2>
-
-                <div className="mb-4 ml-1">
-                  <button onClick={() => setShowAddCategory((s) => !s)} className="flex items-center gap-2 text-xs font-bold text-[#51309E]">
+                  <h2 className="text-sm font-semibold text-[#6B7280] mb-2">Kategori</h2>
+                  <motion.button
+                    onClick={() => router.push("/tambah-doa")}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#51309E] mb-4"
+                  >
                     <PlusCircle className="w-4 h-4" />
-                    {showAddCategory ? "Batal" : "Tambah Kategori"}
-                  </button>
-                </div>
-
-                {showAddCategory && (
-                  <div className="bg-white p-3 rounded-xl border border-gray-100 mb-4">
-                    <div className="mb-2">
-                      <input value={newCatName} onChange={(e) => setNewCatName(e.target.value)} placeholder="Nama kategori" className="w-full p-2 rounded-lg bg-gray-50 border border-gray-100" />
-                    </div>
-                    <div className="mb-2 flex items-center gap-2">
-                      <input value={newCatIcon} onChange={(e) => setNewCatIcon(e.target.value)} placeholder="Emoji" className="w-20 p-2 rounded-lg bg-gray-50 border border-gray-100" />
-                      <button onClick={addNewCategory} className="bg-[#51309E] text-white py-2 px-3 rounded-lg text-sm font-bold">Simpan</button>
-                    </div>
-                  </div>
-                )}
+                    Tambah Doa
+                  </motion.button>
 
                 <div className="grid grid-cols-3 gap-4">
                   {categories.map((item, i) => {
@@ -427,7 +359,7 @@ export default function Dashboard() {
                         key={i}
                         whileTap={{ scale: 0.95 }}
                         transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                        onClick={() => setActiveCategory(item.slug)}
+                        onClick={() => router.push(`/category/${item.slug}`)}
                         className={`relative flex flex-col items-center justify-center rounded-xl border p-4 cursor-pointer transition-all text-center ${isActive
                           ? "bg-[#F3EEFF] border-[#51309E] shadow-sm"
                           : "bg-[#FBFCFD] border-gray-50"
@@ -453,62 +385,21 @@ export default function Dashboard() {
                       </motion.div>
                     );
                   })}
-                </div>
-              </div>
 
-              {/* DOA */}
-                <div>
-                <div className="flex justify-between items-center mb-3 px-0 py-0">
-
-
-                  <motion.button
-                    onClick={() => router.push("/tambah-doa")}
+                  <motion.div
                     whileTap={{ scale: 0.95 }}
                     transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                    className="flex items-center gap-1.5 text-xs font-bold text-[#51309E]"
+                    onClick={() => router.push("/bookmark")}
+                    className="flex flex-col items-center justify-center rounded-xl border p-4 cursor-pointer transition-all text-center bg-[#FBFCFD] border-gray-50"
                   >
-                    <PlusCircle className="w-4 h-4" />
-                    Tambah Doa
-                  </motion.button>
+                    <div className="text-2xl mb-3">
+                      <Bookmark className="w-6 h-6 text-[#51309E]" />
+                    </div>
+                    <span className="text-[12px] font-semibold text-[#3D4759]">Bookmark</span>
+                  </motion.div>
                 </div>
-
-                {categoryLoading ? (
-                  <p className="text-center text-gray-400 mt-10">Loading prayers...</p>
-                ) : filteredDoa.length === 0 ? (
-                  <div className="bg-white border border-gray-100 rounded-[28px] p-8 shadow-sm text-center">
-                    <p className="text-lg font-bold text-[#51309E] mb-2">Doa tidak ditemukan</p>
-                    <p className="text-gray-400">
-                      Coba gunakan kata kunci lain...
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {filteredDoa.map((item, index) => {
-                      const isSaved = savedBookmarks.includes(item.id);
-
-                      return (
-                        <div
-                          key={index}
-                          onClick={() => router.push(`/prayer/${item.id}?source=master`)}
-                          className="bg-white border border-gray-100 rounded-[28px] p-5 shadow-sm cursor-pointer active:scale-[0.98] transition"
-                        >
-                          <div className="flex justify-between items-start mb-4">
-                            <h2 className="font-bold text-lg">{item.judul}</h2>
-                          </div>
-
-                          <p className="text-right text-2xl leading-loose mb-5 font-serif">
-                            {item.doa}
-                          </p>
-
-                          <p className="italic text-gray-400 mb-4">{item.latin}</p>
-
-                          <p className="text-[#3D4759]">{item.terjemahan}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
+
             </>
           )}
         </div>
