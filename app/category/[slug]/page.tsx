@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronLeft, Bookmark, BookmarkCheck } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 
 interface Prayer {
@@ -31,26 +31,7 @@ export default function CategoryPage() {
             });
     }, [slug]);
 
-    const handleBookmark = async (id: number) => {
-        const userId = Number(localStorage.getItem("userId"));
-
-        await fetch("/api/save-bookmark", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                userId,
-                masterPrayerId: id,
-            }),
-        });
-
-        setPrayers((prev) =>
-            prev.map((item) =>
-                item.id === id ? { ...item, bookmarked: !item.bookmarked } : item
-            )
-        );
-    };
+    
 
     const getTitle = () => {
         if (slug === "sehari-hari") return "Doa Sehari-hari";
@@ -82,18 +63,7 @@ export default function CategoryPage() {
                             >
                                 <div className="flex justify-between items-start mb-4">
                                     <h2 className="font-bold text-lg">{item.judul}</h2>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleBookmark(item.id);
-                                        }}
-                                    >
-                                        {item.bookmarked ? (
-                                            <BookmarkCheck className="w-5 h-5 text-[#51309E]" />
-                                        ) : (
-                                            <Bookmark className="w-5 h-5" />
-                                        )}
-                                    </button>
+                                    {/* bookmark removed from list; use detail page to bookmark */}
                                 </div>
 
                                 <p className="text-right text-2xl leading-loose mb-4 font-serif">

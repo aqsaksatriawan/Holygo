@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ChevronLeft, Bookmark, BookmarkCheck } from "lucide-react";
+import { ChevronLeft, ChevronRight, Bookmark, BookmarkCheck } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 const PrayerDetailPage = () => {
@@ -13,6 +13,7 @@ const PrayerDetailPage = () => {
   const source = searchParams.get("source");
 
   const [doaData, setDoaData] = useState<any>(null);
+  const [list, setList] = useState<any[]>([]);
   const [fontSize, setFontSize] = useState(20);
   const [loading, setLoading] = useState(true);
   const [isBookmarked, setIsBookmarked] = useState(false);
@@ -46,11 +47,61 @@ const PrayerDetailPage = () => {
       });
 
       setIsBookmarked(!!found);
+      // fetch surrounding list for prev/next navigation
+      if (source === "master") {
+        if (data?.category) {
+          const listRes = await fetch(`/api/master-prayer/${data.category}`);
+          const listData = await listRes.json();
+          setList(listData || []);
+        }
+      } else {
+        const userId = Number(localStorage.getItem("userId"));
+        if (userId) {
+          const listRes = await fetch(`/api/prayer?userId=${userId}`);
+          const listData = await listRes.json();
+          setList(listData || []);
+        }
+      }
     } catch (error) {
       console.log(error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const currentIndex = list.findIndex((item) => item.id === id);
+
+  const goToPrev = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (currentIndex > 0) {
+      const prevId = list[currentIndex - 1].id;
+      router.push(`/prayer/${prevId}?source=${source}`);
+    }
+  };
+
+  const goToNext = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (currentIndex >= 0 && currentIndex < list.length - 1) {
+      const nextId = list[currentIndex + 1].id;
+      router.push(`/prayer/${nextId}?source=${source}`);
+    }
+  };
+
+  const goBackToList = () => {
+    if (source === "master") {
+      const category = doaData?.category;
+      if (category) {
+        router.push(`/category/${category}`);
+        return;
+      }
+    }
+
+    if (source === "user") {
+      router.push(`/bookmark`);
+      return;
+    }
+
+    router.push("/home");
   };
 
   const handleFontChange = (value: number) => {
@@ -101,11 +152,27 @@ const PrayerDetailPage = () => {
       <div className="w-[375px] h-[812px] bg-white border-8 border-slate-800 rounded-[40px] shadow-xl relative overflow-hidden">
 
         <header className="p-5 flex items-center justify-between border-b sticky top-0 bg-white z-50">
-          <button onClick={() => router.back()}>
+          <button onClick={goBackToList}>
             <ChevronLeft className="w-6 h-6 text-black" />
           </button>
 
-          <h1 className="font-bold text-lg">Prayer Detail</h1>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={goToPrev}
+              className={`p-1 rounded-md ${currentIndex <= 0 ? "opacity-40 pointer-events-none" : ""}`}
+            >
+              <ChevronLeft className="w-5 h-5 text-[#51309E]" />
+            </button>
+
+            <h1 className="font-bold text-lg">Prayer Detail</h1>
+
+            <button
+              onClick={goToNext}
+              className={`p-1 rounded-md ${currentIndex === -1 || currentIndex >= list.length - 1 ? "opacity-40 pointer-events-none" : ""}`}
+            >
+              <ChevronRight className="w-5 h-5 text-[#51309E]" />
+            </button>
+          </div>
 
           <button
             onClick={handleToggleBookmark}
@@ -132,6 +199,15 @@ const PrayerDetailPage = () => {
             >
               {doaData.doa}
             </p>
+
+            <div className="flex justify-center">
+              <button
+                type="button"
+                className="mt-4 rounded-3xl bg-[#51309E] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#3d257f] active:scale-[0.98]"
+              >
+                Baca Doa
+              </button>
+            </div>
 
             <div className="bg-gray-50 rounded-3xl p-5">
               <p
