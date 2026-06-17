@@ -7,10 +7,11 @@ export async function GET(
 ) {
   try {
     const { category } = await context.params;
+    const actualCategory = category === "umrah" ? "umroh" : category;
 
     const prayers = await prisma.masterPrayer.findMany({
       where: {
-        category,
+        category: actualCategory,
       },
       orderBy: {
         id: "asc",

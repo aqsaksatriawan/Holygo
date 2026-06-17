@@ -23,7 +23,8 @@ export default function CategoryPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch(`/api/master-prayer/${slug}`)
+        const fetchCategory = slug === "umrah" ? "umroh" : slug;
+        fetch(`/api/master-prayer/${fetchCategory}`)
             .then((res) => res.json())
             .then((data) => {
                 setPrayers(data);
@@ -31,12 +32,10 @@ export default function CategoryPage() {
             });
     }, [slug]);
 
-    
-
     const getTitle = () => {
         if (slug === "sehari-hari") return "Doa Sehari-hari";
         if (slug === "haji") return "Doa Haji";
-        if (slug === "umrah") return "Doa Umrah";
+        if (slug === "umrah" || slug === "umroh") return "Doa Umrah";
         return "Daftar Doa";
     };
 

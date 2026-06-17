@@ -18,6 +18,74 @@ const PrayerDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [showFontControl, setShowFontControl] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const loadVoices = () => {
+      const availableVoices = window.speechSynthesis.getVoices();
+      if (availableVoices && availableVoices.length > 0) {
+        setVoices(availableVoices);
+      }
+    };
+
+    loadVoices();
+
+    const handleVoicesChanged = () => {
+      loadVoices();
+    };
+
+    window.speechSynthesis.addEventListener("voiceschanged", handleVoicesChanged);
+    return () => {
+      window.speechSynthesis.removeEventListener("voiceschanged", handleVoicesChanged);
+    };
+  }, []);
+
+  const getArabicVoice = () => {
+    if (typeof window === "undefined") return null;
+
+    const availableVoices = voices.length > 0 ? voices : window.speechSynthesis.getVoices();
+    if (!availableVoices || availableVoices.length === 0) return null;
+
+    const bestVoice = availableVoices.find(
+      (voice) => voice.lang.toLowerCase().startsWith("ar") || voice.name.toLowerCase().includes("arabic")
+    );
+
+    return bestVoice || availableVoices[0];
+  };
+
+  const handleSpeakDoa = () => {
+    if (typeof window === "undefined" || !doaData?.doa) return;
+
+    const text = doaData.doa.trim();
+    if (!text) return;
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "ar-SA";
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+
+    const voice = getArabicVoice();
+    if (voice) {
+      utterance.voice = voice;
+    }
+
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handleStopSpeak = () => {
+    if (typeof window === "undefined") return;
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+  };
 
   useEffect(() => {
     fetchPrayerDetail();
@@ -190,7 +258,7 @@ const PrayerDetailPage = () => {
           <div className="p-6 space-y-8 pb-28">
 
             <h2 className="text-center text-2xl font-bold bg-gray-100 inline-block px-4 py-1 rounded-xl mx-auto w-fit">
-              {doaData.judul}
+              {doaData?.judul}
             </h2>
 
             <p
@@ -200,13 +268,23 @@ const PrayerDetailPage = () => {
               {doaData.doa}
             </p>
 
-            <div className="flex justify-center">
+            <div className="flex flex-col items-center gap-3 justify-center">
               <button
                 type="button"
+                onClick={handleSpeakDoa}
                 className="mt-4 rounded-3xl bg-[#51309E] px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#3d257f] active:scale-[0.98]"
               >
-                Baca Doa
+                {isSpeaking ? "Stop" : "Baca Doa"}
               </button>
+              {isSpeaking && (
+                <button
+                  type="button"
+                  onClick={handleStopSpeak}
+                  className="rounded-3xl bg-gray-200 px-5 py-2 text-sm font-semibold text-[#3D4759] shadow-sm transition hover:bg-gray-300 active:scale-[0.98]"
+                >
+                  Berhenti
+                </button>
+              )}
             </div>
 
             <div className="bg-gray-50 rounded-3xl p-5">

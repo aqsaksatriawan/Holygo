@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Bookmark, User, Search, PlusCircle, Clock, ArrowRight, X } from "lucide-react";
+import { Bookmark, User, Users, Search, PlusCircle, Clock, ArrowRight, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 
@@ -12,9 +12,13 @@ export default function Dashboard() {
   const defaultCategories = [
     { nama: "Sehari-hari", slug: "sehari-hari", icon: "🌙" },
     { nama: "Haji", slug: "haji", icon: "🕋" },
-    { nama: "Umrah", slug: "umrah", icon: "🕌" },
+    { nama: "Umrah", slug: "umroh", icon: "🕌" },
   ];
-  const [categories, setCategories] = useState<any[]>(defaultCategories);
+  const initialCategories = [
+    ...defaultCategories,
+    { nama: "Thawaf & Sa'i", slug: "thawaf-sai", icon: "users" },
+  ];
+  const [categories, setCategories] = useState<any[]>(initialCategories);
   const [customCategoriesLoaded, setCustomCategoriesLoaded] = useState(false);
   const router = useRouter();
 
@@ -117,7 +121,10 @@ export default function Dashboard() {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setCategories([...defaultCategories, ...parsed]);
+          setCategories([
+            ...initialCategories,
+            ...parsed.filter((custom: any) => !initialCategories.some((item) => item.slug === custom.slug)),
+          ]);
         }
       }
     } catch (e) {
@@ -141,7 +148,10 @@ export default function Dashboard() {
       const custom = stored ? JSON.parse(stored) : [];
       const updatedCustom = custom.filter((c: any) => c.slug !== slug);
       localStorage.setItem("holygo_custom_categories", JSON.stringify(updatedCustom));
-      setCategories([...defaultCategories, ...updatedCustom]);
+      setCategories([
+        ...initialCategories,
+        ...updatedCustom.filter((custom: any) => !initialCategories.some((item) => item.slug === custom.slug)),
+      ]);
       if (activeCategory === slug) {
         setActiveCategory(null);
       }
@@ -349,10 +359,9 @@ export default function Dashboard() {
                     Tambah Doa
                   </motion.button>
 
-                <div className="grid grid-cols-3 gap-4">
-                  {categories.map((item, i) => {
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  {defaultCategories.map((item, i) => {
                     const isActive = activeCategory === item.slug;
-                    const isCustom = !defaultCategories.find((d) => d.slug === item.slug);
 
                     return (
                       <motion.div
@@ -365,19 +374,6 @@ export default function Dashboard() {
                           : "bg-[#FBFCFD] border-gray-50"
                         }`}
                       >
-                        {isCustom && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteCategory(item.slug);
-                            }}
-                            className="absolute -top-1 -right-1 text-gray-400 hover:text-red-600 bg-transparent p-0.5 rounded-full"
-                            aria-label={`Hapus kategori ${item.nama}`}
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        )}
-
                         <div className="text-2xl mb-3">{item.icon}</div>
                         <span className={`text-[12px] font-semibold ${isActive ? "text-[#51309E]" : "text-[#3D4759]"}`}>
                           {item.nama}
@@ -385,6 +381,31 @@ export default function Dashboard() {
                       </motion.div>
                     );
                   })}
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <motion.div
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                    onClick={() => router.push(`/category/thawaf-sai`)}
+                    className="relative flex flex-col items-center justify-center rounded-xl border p-4 cursor-pointer transition-all text-center bg-[#FBFCFD] border-gray-50"
+                  >
+                    <div className="w-14 h-14 mb-3">
+                      <svg viewBox="0 0 64 64" className="w-full h-full">
+                        <rect x="8" y="16" width="48" height="32" rx="9" fill="#111827" />
+                        <path d="M8 16L32 4L56 16V20H8V16Z" fill="#111827" />
+                        <path d="M12 20H52" stroke="#FBBF24" strokeWidth="4" />
+                        <path d="M16 24H48" stroke="#FBBF24" strokeWidth="3" />
+                        <path d="M16 36H48" stroke="#F59E0B" strokeWidth="3" />
+                        <path d="M20 28C20 24 24 20 32 20C40 20 44 24 44 28" stroke="#FBBF24" strokeWidth="2" fill="none" />
+                        <circle cx="24" cy="54" r="5" fill="#2563EB" />
+                        <rect x="21" y="44" width="6" height="14" rx="3" fill="#FFFFFF" />
+                        <circle cx="40" cy="54" r="5" fill="#2563EB" />
+                        <rect x="37" y="44" width="6" height="14" rx="3" fill="#FFFFFF" />
+                      </svg>
+                    </div>
+                    <span className="text-[12px] font-semibold text-[#3D4759]">Thawaf & Sa'i</span>
+                  </motion.div>
 
                   <motion.div
                     whileTap={{ scale: 0.95 }}
@@ -397,6 +418,8 @@ export default function Dashboard() {
                     </div>
                     <span className="text-[12px] font-semibold text-[#3D4759]">Bookmark</span>
                   </motion.div>
+
+                  <div></div>
                 </div>
               </div>
 
