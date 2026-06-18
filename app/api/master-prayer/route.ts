@@ -6,6 +6,13 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const query = searchParams.get("q") || "";
 
+    if (searchParams.get("all") === "true") {
+      const allPrayers = await prisma.masterPrayer.findMany({
+        orderBy: { id: "asc" }
+      });
+      return NextResponse.json(allPrayers);
+    }
+
     if (!query.trim()) {
       // If query is empty, return a default set of popular prayers for the default search display.
       // E.g., Doa untuk Kedua Orang Tua, Doa Masuk Rumah, Doa Masuk Masjid, Doa Sebelum Tidur

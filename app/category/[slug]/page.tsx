@@ -23,6 +23,11 @@ export default function CategoryPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        // Redirect thawaf-sai to its dedicated page
+        if (slug === "thawaf-sai") {
+            router.replace("/category/thawaf-sai");
+            return;
+        }
         const fetchCategory = slug === "umrah" ? "umroh" : slug;
         fetch(`/api/master-prayer/${fetchCategory}`)
             .then((res) => res.json())
@@ -30,7 +35,7 @@ export default function CategoryPage() {
                 setPrayers(data);
                 setLoading(false);
             });
-    }, [slug]);
+    }, [slug, router]);
 
     const getTitle = () => {
         if (slug === "sehari-hari") return "Doa Sehari-hari";
