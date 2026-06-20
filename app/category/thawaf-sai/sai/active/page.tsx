@@ -1,8 +1,9 @@
 "use client";
 
-import React, { Suspense } from "react";
-import { ChevronLeft, RotateCcw, Plus } from "lucide-react";
+import React, { useEffect, useState, Suspense } from "react";
+import { ChevronLeft, RotateCcw, Plus, Menu } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+
 
 function ActiveSaiContent() {
   const router = useRouter();
@@ -11,6 +12,20 @@ function ActiveSaiContent() {
   const round = roundParam ? parseInt(roundParam, 10) : 1;
   const TOTAL_ROUNDS = 7;
   const PRIMARY_COLOR = "#2F8A5A";
+
+ const STORAGE_KEY = "holygo_sai_doa";
+
+const [doas, setDoas] = useState<any[]>([]);
+
+useEffect(() => {
+  const saved = localStorage.getItem(STORAGE_KEY);
+
+  if (saved) {
+    const parsed = JSON.parse(saved);
+    setDoas(parsed[round] || []);
+  }
+}, [round]);
+  
 
   const handleLanjutkan = () => {
     // Mark this round as done, and go back to the susun doa page
@@ -29,8 +44,43 @@ function ActiveSaiContent() {
     } catch (e) {
       console.error(e);
     }
-    router.back();
+   if (round < 7) {
+  router.push(
+    `/category/thawaf-sai/sai/active?round=${round + 1}`
+  );
+} else {
+  router.push(
+    "/category/thawaf-sai/sai/finish"
+  );
+}
   };
+
+  const handleResetDoa = () => {
+  const confirmReset = window.confirm(
+    `Hapus semua doa pada putaran ${round}?`
+  );
+
+  if (!confirmReset) return;
+
+  const saved = localStorage.getItem(STORAGE_KEY);
+
+  if (!saved) return;
+
+  const parsed = JSON.parse(saved);
+
+  parsed[round] = [];
+
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(parsed)
+  );
+
+  setDoas([]);
+
+  router.push(
+    `/category/thawaf-sai/sai?round=${round}`
+  );
+};
 
   const handleTambahDoa = () => {
     router.back();
@@ -62,8 +112,14 @@ function ActiveSaiContent() {
               );
             })}
           </div>
-
-          <button className="w-10 h-10 flex items-center justify-center">
+<button
+  onClick={() =>
+    router.push(
+      `/category/thawaf-sai/sai?round=${round}`
+    )
+  }
+  className="w-10 h-10 flex items-center justify-center"
+>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={PRIMARY_COLOR} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="8" y1="6" x2="21" y2="6"></line>
               <line x1="8" y1="12" x2="21" y2="12"></line>
@@ -88,9 +144,12 @@ function ActiveSaiContent() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button className="w-[46px] h-[46px] rounded-[14px] border border-[#E5E7EB] flex items-center justify-center">
-              <RotateCcw className="w-5 h-5" style={{ color: PRIMARY_COLOR }} />
-            </button>
+            <button
+  onClick={handleResetDoa}
+  className="w-[46px] h-[46px] rounded-[14px] border border-[#E5E7EB] flex items-center justify-center"
+>
+  <RotateCcw className="w-5 h-5 text-[#1D4ED8]" />
+</button>
             <button 
               onClick={handleLanjutkan}
               className="h-[46px] px-5 rounded-[14px] text-white text-[13px] font-bold shadow-md"
@@ -102,154 +161,71 @@ function ActiveSaiContent() {
         </div>
 
         {/* ===== ILLUSTRATION ===== */}
-        <div className="flex-1 mt-6 relative flex flex-col items-center justify-center overflow-hidden">
-          {/* Light green background glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-green-50 rounded-full blur-3xl opacity-60 pointer-events-none"></div>
-          
-          <div className="relative w-full h-[260px] flex items-center justify-center">
-             
-             {/* Background arches (Colosseum-like) */}
-             <svg width="340" height="120" viewBox="0 0 340 120" fill="none" className="absolute top-4 opacity-40">
-                <path d="M0 60 Q 170 0 340 60 L340 120 L0 120 Z" fill="url(#archGradGreen)"/>
-                <defs>
-                  <linearGradient id="archGradGreen" x1="170" y1="0" x2="170" y2="120" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#D1FAE5"/>
-                    <stop offset="1" stopColor="white" stopOpacity="0"/>
-                  </linearGradient>
-                </defs>
-             </svg>
-             
-             {/* Arches windows */}
-             <div className="absolute top-8 w-full flex justify-between px-2 opacity-30">
-                {[1,2,3,4,5,6,7,8,9,10].map(i => (
-                  <div key={i} className="w-6 h-16 bg-green-200 rounded-t-full"></div>
-                ))}
-             </div>
 
-             {/* Sun dome */}
-             <div className="absolute top-0 w-[200px] h-[200px] bg-[#ECFDF5] rounded-full opacity-60 pointer-events-none"></div>
 
-             {/* Little clouds & birds */}
-             <svg width="300" height="100" className="absolute top-0 pointer-events-none opacity-50">
-                <path d="M50 40 Q 55 35 60 40 Q 65 35 70 40" stroke="#94A3B8" fill="none" strokeWidth="1.5" strokeLinecap="round"/>
-                <path d="M250 30 Q 255 25 260 30 Q 265 25 270 30" stroke="#94A3B8" fill="none" strokeWidth="1.5" strokeLinecap="round"/>
-                <path d="M120 20 Q 130 15 140 20 Q 150 15 160 20" fill="white" opacity="0.8"/>
-                <path d="M180 35 Q 190 30 200 35 Q 210 30 220 35" fill="white" opacity="0.8"/>
-             </svg>
+   <div className="flex-1 overflow-y-auto px-4 pb-4">
+  <div className="flex items-center justify-between mb-4">
+    <span className="px-3 py-1 bg-blue-50 rounded-full text-xs font-semibold text-[#1D4ED8]">
+      Dzikir / Doa
+    </span>
 
-             {/* Green path line connecting Safa and Marwah */}
-             <svg width="260" height="80" viewBox="0 0 260 80" className="absolute top-1/2 -translate-y-4">
-                <path d="M10 40 Q 130 80 250 40" stroke="#10B981" strokeWidth="2" strokeDasharray="4 4" fill="none" />
-                {/* Path arrows */}
-                <path d="M70 56 L65 50 L75 48" stroke="#10B981" strokeWidth="2" fill="none" />
-                <path d="M190 56 L185 48 L195 50" stroke="#10B981" strokeWidth="2" fill="none" />
-             </svg>
+    <span className="text-sm font-bold text-[#1D4ED8]">
+      {doas.length} / {doas.length}
+    </span>
+  </div>
 
-             {/* People (white robes) walking between */}
-             {[
-               {left: "25%", top: "45%", scale: 0.8},
-               {left: "40%", top: "60%", scale: 0.9},
-               {left: "50%", top: "75%", scale: 1},
-               {left: "60%", top: "65%", scale: 0.95},
-               {left: "75%", top: "50%", scale: 0.85},
-             ].map((pos, i) => (
-                <svg key={i} width="16" height="32" viewBox="0 0 16 32" className="absolute" style={{ left: pos.left, top: pos.top, transform: `scale(${pos.scale})` }}>
-                  {/* Head */}
-                  <circle cx="8" cy="4" r="3" fill="#E2E8F0" />
-                  {/* Body/Robe */}
-                  <path d="M8 7 L4 30 L12 30 Z" fill="white" />
-                  {/* Shadow */}
-                  <ellipse cx="8" cy="31" rx="6" ry="1.5" fill="rgba(0,0,0,0.1)" />
-                </svg>
-             ))}
-
-             {/* Safa Rock */}
-             <div className="absolute left-6 top-1/2 -translate-y-1/2 z-10">
-               {/* Rock illustration */}
-               <svg width="90" height="70" viewBox="0 0 90 70" fill="none" className="relative z-0">
-                  <path d="M45 10L10 60H80L45 10Z" fill="#9CA3AF" />
-                  <path d="M45 10L65 30L55 40L80 60H10L45 10Z" fill="#D1D5DB" />
-                  <path d="M30 40L20 60H40L30 40Z" fill="#6B7280" />
-                  <ellipse cx="45" cy="65" rx="40" ry="5" fill="#E5E7EB" className="opacity-50" />
-               </svg>
-               {/* Label Sign */}
-               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-white px-2 py-0.5 rounded shadow-sm border border-green-100 flex flex-col items-center z-10">
-                 <span className="text-[10px] font-bold" style={{ color: PRIMARY_COLOR }}>SAFA</span>
-                 <div className="w-0.5 h-3 bg-gray-300 mt-0.5"></div>
-               </div>
-             </div>
-
-             {/* Marwah Rock */}
-             <div className="absolute right-6 top-1/2 -translate-y-1/2 z-10">
-               {/* Rock illustration */}
-               <svg width="80" height="60" viewBox="0 0 80 60" fill="none" className="relative z-0 mt-2">
-                  <path d="M40 10L5 50H75L40 10Z" fill="#9CA3AF" />
-                  <path d="M40 10L60 25L50 35L75 50H5L40 10Z" fill="#D1D5DB" />
-                  <path d="M25 35L15 50H35L25 35Z" fill="#6B7280" />
-                  <ellipse cx="40" cy="55" rx="35" ry="4" fill="#E5E7EB" className="opacity-50" />
-               </svg>
-               {/* Label Sign */}
-               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white px-2 py-0.5 rounded shadow-sm border border-green-100 flex flex-col items-center z-10">
-                 <span className="text-[10px] font-bold" style={{ color: PRIMARY_COLOR }}>MARWAH</span>
-                 <div className="w-0.5 h-3 bg-gray-300 mt-0.5"></div>
-               </div>
-             </div>
-             
-             {/* Decorative leaves */}
-             <svg width="40" height="60" viewBox="0 0 40 60" className="absolute bottom-0 left-4 opacity-60">
-                <path d="M20 60 C 20 40 5 30 5 20 C 5 10 15 5 20 5" stroke="#34D399" fill="none" strokeWidth="2"/>
-                <path d="M20 40 C 30 30 35 20 35 15 C 35 10 25 5 20 20" fill="#6EE7B7"/>
-                <path d="M15 30 C 5 25 0 15 0 10 C 0 5 10 0 15 15" fill="#A7F3D0"/>
-                <path d="M22 50 C 35 45 40 35 40 30 C 40 25 30 20 22 35" fill="#34D399"/>
-             </svg>
-             <svg width="40" height="60" viewBox="0 0 40 60" className="absolute bottom-0 right-4 opacity-60 transform scale-x-[-1]">
-                <path d="M20 60 C 20 40 5 30 5 20 C 5 10 15 5 20 5" stroke="#34D399" fill="none" strokeWidth="2"/>
-                <path d="M20 40 C 30 30 35 20 35 15 C 35 10 25 5 20 20" fill="#6EE7B7"/>
-                <path d="M15 30 C 5 25 0 15 0 10 C 0 5 10 0 15 15" fill="#A7F3D0"/>
-                <path d="M22 50 C 35 45 40 35 40 30 C 40 25 30 20 22 35" fill="#34D399"/>
-             </svg>
-          </div>
-        </div>
-
-        {/* ===== BOTTOM TEXT & ACTIONS ===== */}
-        <div className="px-5 pb-6 shrink-0 flex flex-col items-center text-center">
-          <div className="w-12 h-12 flex items-center justify-center mb-2">
-            <svg className="w-8 h-8" style={{ color: PRIMARY_COLOR }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
-              <path d="M8 7h8" />
-              <path d="M8 11h6" />
-            </svg>
-          </div>
-          <h3 className="text-[18px] font-bold text-[#1e293b] mb-1.5">Tata Cara Sa&apos;i</h3>
-          <p className="text-[13px] text-[#64748b] leading-relaxed max-w-[260px] mx-auto mb-6">
-            Berjalan atau berlari-lari kecil antara Bukit Safa dan Marwah sebanyak 7 kali putaran.
-          </p>
-
-          <button
-            onClick={handleTambahDoa}
-            className="w-full h-[64px] border border-dashed border-[#10B981] bg-white rounded-2xl flex flex-col items-center justify-center gap-1 active:bg-green-50 transition-colors"
-          >
-            <div className="flex items-center gap-2 font-bold text-[14px]" style={{ color: PRIMARY_COLOR }}>
-              <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: PRIMARY_COLOR }}>
-                <Plus className="w-3.5 h-3.5 text-white" strokeWidth={3} />
-              </div>
-              Tambah Doa
+  <div className="space-y-4">
+    
+    {doas.map((doa, index) => (
+      
+      <div
+  key={doa.id}
+  className="bg-white border border-[#E5E7EB] rounded-3xl overflow-hidden shadow-sm"
+>
+        <div className="flex items-center justify-between px-4 py-3 bg-[#F8FAFC]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#DCFCE7] flex items-center justify-center">
+              🕌
             </div>
-            <p className="text-[11px] text-[#64748b]">
-              Ketuk untuk menambahkan dzikir &amp; doa selama Sa&apos;i.
-            </p>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
-export default function ActiveSaiPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-[#f3f4f6]"></div>}>
-      <ActiveSaiContent />
-    </Suspense>
-  );
-}
+            <h3 className="text-[28px] leading-relaxed font-arabic text-right">
+        {doa.arab}
+      </h3>
+    </div>
+        </div>
+
+{/* Content */}
+  <div className="p-4">
+  <div className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[#EEF2FF] text-xs font-semibold mb-2">
+    Latin
+  </div>
+
+  <p className="font-semibold text-base text-[#2F8A5A]">
+    {doa.latin}
+  </p>
+
+  <p className="text-[#475569] mt-3 leading-relaxed">
+    {doa.terjemahan}
+  </p>
+</div>
+</div>
+
+       
+    ))}
+ </div>
+ </div>
+ 
+            
+       </div>
+     </div>
+   );
+ }
+ 
+ export default function ActiveThawafPage() {
+   return (
+     <Suspense fallback={<div className="min-h-screen bg-[#f3f4f6]"></div>}>
+       <ActiveSaiContent/>
+     </Suspense>
+   );
+ }
+ 

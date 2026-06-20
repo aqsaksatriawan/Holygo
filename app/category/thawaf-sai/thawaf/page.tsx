@@ -7,7 +7,9 @@ import { useRouter } from "next/navigation";
 interface SelectedDoa {
   id: number;
   judul: string;
+  arab?: string;
   latin?: string;
+  terjemahan?: string;
 }
 
 const TOTAL_ROUNDS = 7;
@@ -53,14 +55,28 @@ export default function ThawafDetailPage() {
   const completedCount = progress.filter(Boolean).length;
   const currentDoas = roundDoas[activeRound] || [];
 
-  const handleStartRound = () => {
-    // Navigate to doa if available, else go to empty state active thawaf page
-    if (currentDoas.length > 0) {
-      router.push(`/prayer/${currentDoas[0].id}?source=master`);
-    } else {
-      router.push(`/category/thawaf-sai/thawaf/active?round=${activeRound}`);
-    }
+const handleRemoveDoa = (doaId: number) => {
+  const updatedList = currentDoas.filter((doa) => doa.id !== doaId);
+
+  const newRoundDoas = {
+    ...roundDoas,
+    [activeRound]: updatedList,
   };
+
+  setRoundDoas(newRoundDoas);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(newRoundDoas));
+};
+
+  const handleStartRound = () => {
+  if (currentDoas.length === 0) {
+    alert("Silakan pilih minimal satu doa");
+    return;
+  }
+
+  router.push(
+    `/category/thawaf-sai/thawaf/active?round=${activeRound}`
+  );
+};
 
   const handleAddDoa = () => {
     setShowModal(true);
@@ -220,14 +236,24 @@ export default function ThawafDetailPage() {
               /* Selected doas list */
               <div className="bg-[#F9FAFB] rounded-[20px] px-4 py-4 mb-4 space-y-2">
                 {currentDoas.map((doa, idx) => (
-                  <div
-                    key={doa.id}
-                    className="bg-white rounded-xl px-4 py-3 flex items-center justify-between shadow-sm"
-                  >
-                    <span className="text-[13px] font-medium text-[#1A1A1A]">
-                      {idx + 1}. {doa.judul}
-                    </span>
-                  </div>
+                 <div
+  key={doa.id}
+  className="bg-white rounded-xl px-4 py-3 flex items-center justify-between shadow-sm"
+>
+  <span className="text-[13px] font-medium text-[#1A1A1A] flex-1">
+    {idx + 1}. {doa.judul}
+  </span>
+
+  <button
+    onClick={() => handleRemoveDoa(doa.id)}
+    className="ml-3 w-7 h-7 rounded-full bg-red-50 hover:bg-red-100 flex items-center justify-center transition"
+  >
+    <X
+      className="w-4 h-4 text-red-500"
+      strokeWidth={2.5}
+    />
+  </button>
+</div>
                 ))}
               </div>
             )}
@@ -325,7 +351,16 @@ export default function ThawafDetailPage() {
                         if (isSelected) {
                           updatedList = currentDoas.filter(d => d.id !== prayer.id);
                         } else {
-                          updatedList = [...currentDoas, { id: prayer.id, judul: prayer.judul, latin: prayer.latin }];
+                          updatedList = [
+  ...currentDoas,
+  {
+    id: prayer.id,
+    judul: prayer.judul,
+    arab: prayer.doa,
+    latin: prayer.latin,
+    terjemahan: prayer.terjemahan,
+  }
+];
                         }
                         const newRoundDoas = { ...roundDoas, [activeRound]: updatedList };
                         setRoundDoas(newRoundDoas);
@@ -358,3 +393,5 @@ export default function ThawafDetailPage() {
     </div>
   );
 }
+
+

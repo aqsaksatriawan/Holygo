@@ -7,7 +7,9 @@ import { useRouter } from "next/navigation";
 interface SelectedDoa {
   id: number;
   judul: string;
+  arab?: string;
   latin?: string;
+  terjemahan?: string;
 }
 
 const TOTAL_ROUNDS = 7;
@@ -54,13 +56,15 @@ export default function SaiDetailPage() {
   const currentDoas = roundDoas[activeRound] || [];
 
   const handleStartRound = () => {
-    // Navigate to doa if available, else go to empty state active sai page
-    if (currentDoas.length > 0) {
-      router.push(`/prayer/${currentDoas[0].id}?source=master`);
-    } else {
-      router.push(`/category/thawaf-sai/sai/active?round=${activeRound}`);
-    }
-  };
+  if (currentDoas.length === 0) {
+    alert("Silakan pilih minimal satu doa");
+    return;
+  }
+
+  router.push(
+    `/category/thawaf-sai/sai/active?round=${activeRound}`
+  );
+};
 
   const handleAddDoa = () => {
     setShowModal(true);
@@ -247,6 +251,31 @@ export default function SaiDetailPage() {
                     <span className="text-[13px] font-medium text-[#1A1A1A]">
                       {idx + 1}. {doa.judul}
                     </span>
+                     <button
+      onClick={() => {
+        const updatedList = currentDoas.filter(
+          (d) => d.id !== doa.id
+        );
+
+        const newRoundDoas = {
+          ...roundDoas,
+          [activeRound]: updatedList,
+        };
+
+        setRoundDoas(newRoundDoas);
+
+        localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify(newRoundDoas)
+        );
+      }}
+      className="w-10 h-10 rounded-full bg-red-50 hover:bg-red-100 flex items-center justify-center transition"
+    >
+      <X
+        className="w-5 h-5 text-red-500"
+        strokeWidth={2.5}
+      />
+    </button>
                   </div>
                 ))}
               </div>
@@ -330,7 +359,7 @@ export default function SaiDetailPage() {
               </div>
             </div>
 
-            {/* List */}
+           {/* List */}
             <div className="flex-1 overflow-y-auto px-5 pb-8 space-y-0 divide-y divide-gray-100">
               {allPrayers
                 .filter((p) => 
@@ -349,7 +378,16 @@ export default function SaiDetailPage() {
                         if (isSelected) {
                           updatedList = currentDoas.filter(d => d.id !== prayer.id);
                         } else {
-                          updatedList = [...currentDoas, { id: prayer.id, judul: prayer.judul, latin: prayer.latin }];
+                          updatedList = [
+  ...currentDoas,
+  {
+    id: prayer.id,
+    judul: prayer.judul,
+    arab: prayer.doa,
+    latin: prayer.latin,
+    terjemahan: prayer.terjemahan,
+  }
+];
                         }
                         const newRoundDoas = { ...roundDoas, [activeRound]: updatedList };
                         setRoundDoas(newRoundDoas);
@@ -359,10 +397,8 @@ export default function SaiDetailPage() {
                     >
                       {/* Radio button style selector */}
                       <div className="shrink-0 pt-0.5">
-                        <div className={`w-5 h-5 rounded-full border-[1.5px] flex items-center justify-center transition-colors ${isSelected ? 'border-[' + PRIMARY_COLOR + ']' : 'border-gray-300'}`}
-                             style={isSelected ? { borderColor: PRIMARY_COLOR } : {}}
-                        >
-                          {isSelected && <div className="w-3 h-3 rounded-full" style={{ backgroundColor: PRIMARY_COLOR }} />}
+                        <div className={`w-5 h-5 rounded-full border-[1.5px] flex items-center justify-center transition-colors ${isSelected ? 'border-[#3B82F6]' : 'border-gray-300'}`}>
+                          {isSelected && <div className="w-3 h-3 rounded-full bg-[#3B82F6]" />}
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">

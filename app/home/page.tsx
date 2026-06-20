@@ -13,6 +13,7 @@ export default function Dashboard() {
     { nama: "Sehari-hari", slug: "sehari-hari", icon: "🌙" },
     { nama: "Haji", slug: "haji", icon: "🕋" },
     { nama: "Umrah", slug: "umroh", icon: "🕌" },
+    
   ];
   const initialCategories = [
     ...defaultCategories,
@@ -385,25 +386,12 @@ export default function Dashboard() {
 
                 <div className="grid grid-cols-3 gap-4">
                   <motion.div
-                    whileTap={{ scale: 0.95 }}
+                    whileTap={{ scale: 1.95 }}
                     transition={{ type: "spring", stiffness: 400, damping: 15 }}
                     onClick={() => router.push(`/category/thawaf-sai`)}
                     className="relative flex flex-col items-center justify-center rounded-xl border p-4 cursor-pointer transition-all text-center bg-[#FBFCFD] border-gray-50"
                   >
-                    <div className="w-14 h-14 mb-3">
-                      <svg viewBox="0 0 64 64" className="w-full h-full">
-                        <rect x="8" y="16" width="48" height="32" rx="9" fill="#111827" />
-                        <path d="M8 16L32 4L56 16V20H8V16Z" fill="#111827" />
-                        <path d="M12 20H52" stroke="#FBBF24" strokeWidth="4" />
-                        <path d="M16 24H48" stroke="#FBBF24" strokeWidth="3" />
-                        <path d="M16 36H48" stroke="#F59E0B" strokeWidth="3" />
-                        <path d="M20 28C20 24 24 20 32 20C40 20 44 24 44 28" stroke="#FBBF24" strokeWidth="2" fill="none" />
-                        <circle cx="24" cy="54" r="5" fill="#2563EB" />
-                        <rect x="21" y="44" width="6" height="14" rx="3" fill="#FFFFFF" />
-                        <circle cx="40" cy="54" r="5" fill="#2563EB" />
-                        <rect x="37" y="44" width="6" height="14" rx="3" fill="#FFFFFF" />
-                      </svg>
-                    </div>
+                   👣
                     <span className="text-[12px] font-semibold text-[#3D4759]">Thawaf & Sa'i</span>
                   </motion.div>
 

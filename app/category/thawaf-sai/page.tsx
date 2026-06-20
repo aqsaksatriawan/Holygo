@@ -4,13 +4,12 @@ import React, { useEffect, useState, useCallback } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-interface Prayer {
+interface SelectedDoa {
   id: number;
   judul: string;
-  doa: string;
-  latin: string;
-  terjemahan: string;
-  category: string;
+  arab?: string;
+  latin?: string;
+  terjemahan?: string;
 }
 
 const STORAGE_KEY_THAWAF = "holygo_thawaf_progress";
@@ -26,8 +25,8 @@ export default function ThawafSaiPage() {
   const [saiCompleted, setSaiCompleted] = useState<boolean[]>(
     Array(TOTAL_ROUNDS).fill(false)
   );
-  const [thawafPrayers, setThawafPrayers] = useState<Prayer[]>([]);
-  const [saiPrayers, setSaiPrayers] = useState<Prayer[]>([]);
+  const [thawafPrayers, setThawafPrayers] = useState<SelectedDoa[]>([]);
+  const [saiPrayers, setSaiPrayers] = useState<SelectedDoa[]>([]);
 
   // Load progress from localStorage
   useEffect(() => {
@@ -246,7 +245,7 @@ export default function ThawafSaiPage() {
                 <p className="text-[11px] text-[#6B7280] leading-snug flex-1">
                   Baca doa setiap putaran di antara Rukun Yamani dan Hajar Aswad.
                 </p>
-                <ChevronRight className="w-4 h-4 text-[#D1D5DB] shrink-0" />
+              
               </div>
             </div>
           </div>
@@ -354,7 +353,7 @@ export default function ThawafSaiPage() {
                 <p className="text-[11px] text-[#6B7280] leading-snug flex-1">
                   Baca doa dan dzikir di setiap perjalanan antara Shafa dan Marwah.
                 </p>
-                <ChevronRight className="w-4 h-4 text-[#D1D5DB] shrink-0" />
+            
               </div>
             </div>
           </div>
