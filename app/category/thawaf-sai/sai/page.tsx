@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ChevronLeft, Plus, Play, Search, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Plus, Search, X } from "lucide-react";
 
 interface SelectedDoa {
   id: number;
@@ -15,13 +14,11 @@ interface SelectedDoa {
 const TOTAL_ROUNDS = 7;
 const STORAGE_KEY = "holygo_sai_doa";
 const PROGRESS_KEY = "holygo_sai_progress";
-const PRIMARY_COLOR = "#2F8A5A";
+
 
 export default function SaiDetailPage() {
-  const router = useRouter();
   const [activeRound, setActiveRound] = useState(1);
   const [roundDoas, setRoundDoas] = useState<Record<number, SelectedDoa[]>>({});
-  const [progress, setProgress] = useState<boolean[]>(Array(TOTAL_ROUNDS).fill(false));
   const [showModal, setShowModal] = useState(false);
   const [allPrayers, setAllPrayers] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -34,73 +31,34 @@ export default function SaiDetailPage() {
       .catch((e) => console.error(e));
   }, []);
 
-  // Load saved doas and progress
+  // Load saved doas
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         setRoundDoas(JSON.parse(saved));
       }
-      const savedProgress = localStorage.getItem(PROGRESS_KEY);
-      if (savedProgress) {
-        const parsed = JSON.parse(savedProgress);
-        if (Array.isArray(parsed) && parsed.length === TOTAL_ROUNDS) {
-          setProgress(parsed);
-        }
-      }
     } catch (e) {
       console.error(e);
     }
   }, []);
 
+  // Auto-open modal when round has no doas
+  useEffect(() => {
+    const doas = roundDoas[activeRound] || [];
+    if (doas.length === 0 && allPrayers.length > 0) {
+      setShowModal(true);
+    } else {
+      setShowModal(false);
+    }
+  }, [activeRound, roundDoas, allPrayers]);
+
   const currentDoas = roundDoas[activeRound] || [];
 
-  const handleStartRound = () => {
-  if (currentDoas.length === 0) {
-    alert("Silakan pilih minimal satu doa");
-    return;
-  }
-
-  router.push(
-    `/category/thawaf-sai/sai/active?round=${activeRound}`
-  );
-};
-
-  const handleAddDoa = () => {
-    setShowModal(true);
-  };
-
   return (
-    <div className="flex items-center justify-center min-h-screen bg-[#f3f4f6] font-sans">
-      <div className="w-[375px] h-[812px] bg-white border-8 border-slate-800 rounded-[40px] shadow-xl relative overflow-hidden flex flex-col">
-        {/* ===== HEADER ===== */}
-        <header className="px-5 pt-5 pb-4 bg-white shrink-0">
-          <div className="flex items-start gap-3">
-            <button
-              onClick={() => router.push("/category/thawaf-sai")}
-              className="mt-0.5 p-1.5 border border-[#F3F4F6] rounded-[14px] bg-white shadow-sm"
-            >
-              <ChevronLeft className="w-5 h-5 text-[#1A1A1A]" strokeWidth={2.5} />
-            </button>
-            <div>
-              <h1 className="font-bold text-[20px] text-[#1A1A1A] leading-tight">
-                Sa&apos;i — Susun Doa
-              </h1>
-              <p className="text-[11px] text-[#9CA3AF] leading-snug mt-1.5 max-w-[260px]">
-                Pilih doa untuk setiap putaran sebelum memulai. Ketuk nomor putaran untuk beralih.
-              </p>
-            </div>
-          </div>
-        </header>
-
-        {/* ===== ROUND TABS ===== */}
-        <div className="px-5 pb-4 shrink-0 relative">
-          <div className="absolute top-1/2 left-[30px] right-[30px] h-[1px] border-t-2 border-dashed border-[#E5E7EB] -translate-y-1/2 z-0"></div>
-          <div className="flex items-center justify-between relative z-10">
-            {Array.from({ length: TOTAL_ROUNDS }, (_, i) => {
-              const round = i + 1;
-              const isActive = activeRound === round;
-              const isDone = progress[i];
+    <div>
+      {/* Only render modal */}
+      {showModal && (
               return (
                 <button
                   key={round}

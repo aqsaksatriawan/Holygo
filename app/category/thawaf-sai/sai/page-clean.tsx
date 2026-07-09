@@ -12,16 +12,16 @@ interface SelectedDoa {
 }
 
 const TOTAL_ROUNDS = 7;
-const STORAGE_KEY = "holygo_thawaf_doa";
+const STORAGE_KEY = "holygo_sai_doa";
 
-export default function ThawafDetailPage() {
+export default function SaiDetailPage() {
   const [activeRound, setActiveRound] = useState(1);
   const [roundDoas, setRoundDoas] = useState<Record<number, SelectedDoa[]>>({});
   const [showModal, setShowModal] = useState(false);
   const [allPrayers, setAllPrayers] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch all prayers for modal
+  // Fetch all prayers
   useEffect(() => {
     fetch("/api/master-prayer?all=true")
       .then((res) => res.json())
@@ -51,7 +51,7 @@ export default function ThawafDetailPage() {
     }
   }, [activeRound, roundDoas, allPrayers]);
 
-const currentDoas = roundDoas[activeRound] || [];
+  const currentDoas = roundDoas[activeRound] || [];
 
   return (
     <div>
@@ -72,7 +72,7 @@ const currentDoas = roundDoas[activeRound] || [];
             </div>
             
             <div className="px-5 pb-3 flex items-center justify-between shrink-0">
-              <h2 className="flex items-center gap-2 font-bold text-[16px] text-[#3B82F6]">
+              <h2 className="flex items-center gap-2 font-bold text-[16px] text-[#2F8A5A]">
                 <Plus className="w-5 h-5" strokeWidth={2.5} />
                 Tambah Doa
               </h2>
@@ -89,7 +89,7 @@ const currentDoas = roundDoas[activeRound] || [];
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Cari doa atau kategori..."
-                  className="w-full h-11 bg-white border border-[#E5E7EB] rounded-2xl pl-11 pr-4 text-[13px] focus:outline-none focus:border-[#3B82F6] focus:ring-1 focus:ring-[#3B82F6] transition-all text-[#1A1A1A] placeholder-gray-400"
+                  className="w-full h-11 bg-white border border-[#E5E7EB] rounded-2xl pl-11 pr-4 text-[13px] focus:outline-none focus:border-[#2F8A5A] focus:ring-1 focus:ring-[#2F8A5A] transition-all text-[#1A1A1A] placeholder-gray-400"
                 />
               </div>
             </div>
@@ -114,15 +114,15 @@ const currentDoas = roundDoas[activeRound] || [];
                           updatedList = currentDoas.filter(d => d.id !== prayer.id);
                         } else {
                           updatedList = [
-  ...currentDoas,
-  {
-    id: prayer.id,
-    judul: prayer.judul,
-    arab: prayer.doa,
-    latin: prayer.latin,
-    terjemahan: prayer.terjemahan,
-  }
-];
+                            ...currentDoas,
+                            {
+                              id: prayer.id,
+                              judul: prayer.judul,
+                              arab: prayer.doa,
+                              latin: prayer.latin,
+                              terjemahan: prayer.terjemahan,
+                            }
+                          ];
                         }
                         const newRoundDoas = { ...roundDoas, [activeRound]: updatedList };
                         setRoundDoas(newRoundDoas);
@@ -130,10 +130,10 @@ const currentDoas = roundDoas[activeRound] || [];
                       }}
                       className="py-3.5 flex items-center gap-3 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition px-2 -mx-2 rounded-xl"
                     >
-                      {/* Radio button style selector */}
+                      {/* Radio button */}
                       <div className="shrink-0 pt-0.5">
-                        <div className={`w-5 h-5 rounded-full border-[1.5px] flex items-center justify-center transition-colors ${isSelected ? 'border-[#3B82F6]' : 'border-gray-300'}`}>
-                          {isSelected && <div className="w-3 h-3 rounded-full bg-[#3B82F6]" />}
+                        <div className={`w-5 h-5 rounded-full border-[1.5px] flex items-center justify-center transition-colors ${isSelected ? 'border-[#2F8A5A]' : 'border-gray-300'}`}>
+                          {isSelected && <div className="w-3 h-3 rounded-full bg-[#2F8A5A]" />}
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">

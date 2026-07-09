@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Bookmark, User, Users, Search, PlusCircle, Clock, ArrowRight, X } from "lucide-react";
+import { Bookmark, User, Users, Search, PlusCircle, Clock, ArrowRight, X, RotateCcw } from "lucide-react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 
@@ -386,13 +386,27 @@ export default function Dashboard() {
 
                 <div className="grid grid-cols-3 gap-4">
                   <motion.div
-                    whileTap={{ scale: 1.95 }}
+                    whileTap={{ scale: 0.95 }}
                     transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                    onClick={() => router.push(`/category/thawaf-sai`)}
+                    onClick={() => router.push(`/category/thawaf-sai/thawaf/active?round=1`)}
                     className="relative flex flex-col items-center justify-center rounded-xl border p-4 cursor-pointer transition-all text-center bg-[#FBFCFD] border-gray-50"
                   >
-                   👣
-                    <span className="text-[12px] font-semibold text-[#3D4759]">Thawaf & Sa'i</span>
+                    <div className="mb-3 w-12 h-12 rounded-lg bg-[#EEF2FF] flex items-center justify-center">
+                      <RotateCcw className="w-6 h-6 text-[#1D4ED8]" />
+                    </div>
+                    <span className="text-[12px] font-semibold text-[#3D4759]">Thawaf</span>
+                  </motion.div>
+
+                  <motion.div
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 15 }}
+                    onClick={() => router.push(`/category/thawaf-sai/sai/active?round=1`)}
+                    className="relative flex flex-col items-center justify-center rounded-xl border p-4 cursor-pointer transition-all text-center bg-[#FBFCFD] border-gray-50"
+                  >
+                    <div className="mb-3">
+                      <span className="text-4xl">👣</span>
+                    </div>
+                    <span className="text-[12px] font-semibold text-[#3D4759]">Sa'i</span>
                   </motion.div>
 
                   <motion.div
@@ -406,8 +420,6 @@ export default function Dashboard() {
                     </div>
                     <span className="text-[12px] font-semibold text-[#3D4759]">Bookmark</span>
                   </motion.div>
-
-                  <div></div>
                 </div>
               </div>
 

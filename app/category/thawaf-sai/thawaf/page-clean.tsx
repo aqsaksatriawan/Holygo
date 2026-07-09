@@ -21,7 +21,7 @@ export default function ThawafDetailPage() {
   const [allPrayers, setAllPrayers] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch all prayers for modal
+  // Fetch all prayers
   useEffect(() => {
     fetch("/api/master-prayer?all=true")
       .then((res) => res.json())
@@ -51,7 +51,7 @@ export default function ThawafDetailPage() {
     }
   }, [activeRound, roundDoas, allPrayers]);
 
-const currentDoas = roundDoas[activeRound] || [];
+  const currentDoas = roundDoas[activeRound] || [];
 
   return (
     <div>
@@ -114,15 +114,15 @@ const currentDoas = roundDoas[activeRound] || [];
                           updatedList = currentDoas.filter(d => d.id !== prayer.id);
                         } else {
                           updatedList = [
-  ...currentDoas,
-  {
-    id: prayer.id,
-    judul: prayer.judul,
-    arab: prayer.doa,
-    latin: prayer.latin,
-    terjemahan: prayer.terjemahan,
-  }
-];
+                            ...currentDoas,
+                            {
+                              id: prayer.id,
+                              judul: prayer.judul,
+                              arab: prayer.doa,
+                              latin: prayer.latin,
+                              terjemahan: prayer.terjemahan,
+                            }
+                          ];
                         }
                         const newRoundDoas = { ...roundDoas, [activeRound]: updatedList };
                         setRoundDoas(newRoundDoas);
@@ -130,7 +130,7 @@ const currentDoas = roundDoas[activeRound] || [];
                       }}
                       className="py-3.5 flex items-center gap-3 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition px-2 -mx-2 rounded-xl"
                     >
-                      {/* Radio button style selector */}
+                      {/* Radio button */}
                       <div className="shrink-0 pt-0.5">
                         <div className={`w-5 h-5 rounded-full border-[1.5px] flex items-center justify-center transition-colors ${isSelected ? 'border-[#3B82F6]' : 'border-gray-300'}`}>
                           {isSelected && <div className="w-3 h-3 rounded-full bg-[#3B82F6]" />}
